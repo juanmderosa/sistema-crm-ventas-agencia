@@ -1,5 +1,13 @@
 # Estado de entrega
 
+## Etapa 1 — incremento 2: tipos y CI de base de datos (2026-10-27)
+
+Generado `src/lib/supabase/database.types.ts` desde el esquema público de Supabase local migrado, con el CLI fijado en dependencias y formato Prettier. Nuevos comandos `db:migrate`, `db:types` y `db:types:check`; la comprobación no modifica archivos y falla si faltan, difieren o no se pueden generar. Los tipos describen estructura, no autorizan operaciones ni reemplazan RLS y validaciones.
+
+El camino completo del check `application` ahora inicia Supabase aislado en el runner Linux, aplica migraciones, ejecuta pgTAP y comprueba tipos. Los PR solo documentales conservan su camino liviano. El límite del job pasa de 20 a 35 minutos para descargar/iniciar contenedores. No se imprimen ni suben los logs de inicio que pueden contener claves locales; no se usan conexiones ni secretos de producción. Sin nuevas dependencias, cambios de lockfile, reset local ni operaciones de escritura Git.
+
+Verificado localmente: no había migraciones pendientes; 105 comprobaciones pgTAP aprobadas; generación y comparación de tipos aprobadas. Una diferencia temporal en el archivo fue rechazada con salida 1 y se restauró antes de verificar la coincidencia. YAML parseado correctamente. También aprobaron `npm run check` (formato, lint, TypeScript, 2 pruebas unitarias), 8 pruebas del selector CI, build Next.js, 4 pruebas E2E, build OpenNext y Wrangler dry-run (4503.01 KiB / gzip 939.04 KiB), sin despliegue. Se retiró el cambio automático de `next-env.d.ts`. Se conserva la advertencia de compatibilidad parcial de OpenNext con Windows; no se repitió ejecución de Worker local ni se certifica producción. GitHub Actions remoto todavía no ejecutado para este incremento: su aprobación en Linux sigue siendo requisito antes de integrar.
+
 ## Etapa 1 — incremento 1: esquema y aislamiento (2026-10-27)
 
 En `codex/agencies-roles-schema`: migración mínima de `agencies`, `profiles`, `memberships` y `platform_admins`, restricciones y RLS de lectura. Membresías múltiples con roles independientes, administración de plataforma separada y revocación por estado activo. Ningún cliente tiene escrituras directas, tampoco los administradores. Sin login, gestión de usuarios, auditoría de cambios de rol, pantallas ni tipos generados.
@@ -8,7 +16,7 @@ Aplicada únicamente a Supabase local mediante `supabase migration up --local`, 
 
 Verificación: `npm run db:test` (105 comprobaciones), `npm run check` (formato, lint, TypeScript y 2 pruebas unitarias) y `npm run build` aprobados. Se normalizaron finales CRLF a LF de archivos existentes para satisfacer Prettier, sin cambios de contenido ajenos al alcance. El build necesitó ejecutarse fuera del aislamiento después de EPERM al crear un directorio de `.next`; se retiró su cambio automático en `next-env.d.ts`. No se repitieron E2E, empaquetado OpenNext ni runtime Worker porque este incremento no modifica aplicación, dependencias ni integración de datos; no se certifica producción ni autenticación HTTP con pgTAP.
 
-Pendiente de revisión del usuario. Siguiente incremento, después del punto de commit: tipos generados desde la base migrada y pruebas de base de datos en CI. No considerar la tarea completa ni lista para integración hasta ese incremento. No se modificaron dependencias, override de glob ni configuración de OpenNext/Cloudflare.
+Incremento 1 versionado por el usuario antes de autorizar el incremento 2 descrito arriba. No se modificaron dependencias, override de glob ni configuración de OpenNext/Cloudflare.
 
 ## CI por alcance (2026-10-27)
 
@@ -45,7 +53,7 @@ React Hook Form, SDK Supabase, Testing Library y Recharts se incorporarán en su
 
 ## Próxima entrega
 
-Completar el incremento 2 de esta tarea: tipos generados y CI de base de datos. Login y administración inicial quedan como tareas posteriores, fuera del alcance aprobado del esquema y aislamiento. Docker Linux está disponible; no usar mocks como sustituto de la verificación de seguridad.
+Revisar el incremento 2 y verificar la corrida remota completa del workflow antes de integrar. Login y administración inicial quedan como tareas posteriores, fuera del alcance aprobado del esquema y aislamiento. Docker Linux está disponible; no usar mocks como sustituto de la verificación de seguridad.
 
 ## Antes del piloto
 

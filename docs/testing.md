@@ -23,7 +23,7 @@ Mocks may isolate UI network behavior; they do not prove permission or database 
 
 With local Supabase running, apply pending migrations using `npx supabase migration up --local` (no reset), then run `npm run db:test`. The agency/role suite uses pgTAP against PostgreSQL with actual `anon`/`authenticated` roles and synthetic JWT subjects. Fixtures and test-only helpers run inside a transaction ending in ROLLBACK; do not use customer data or reset an existing database to run these tests.
 
-The 105 assertions cover two agencies with superadmin/admin/two active sellers/one inactive seller each, a member with different roles in both agencies, active/inactive platform assignments and a user without membership. Checks include permitted reads, cross-agency denial, private profiles, forged user metadata, inactive agencies, immediate revocation, client write denial, role escalation, constraints and RLS activation. Inventory, Storage, endpoint authentication and concurrency are outside this schema increment and are not certified by these tests. The database CI job and generated types belong to the next reviewed increment; the existing CI does not run pgTAP yet.
+The 105 assertions cover two agencies with superadmin/admin/two active sellers/one inactive seller each, a member with different roles in both agencies, active/inactive platform assignments and a user without membership. Checks include permitted reads, cross-agency denial, private profiles, forged user metadata, inactive agencies, immediate revocation, client write denial, role escalation, constraints and RLS activation. Inventory, Storage, endpoint authentication and concurrency are outside this schema increment and are not certified by these tests. The full CI path starts an isolated Supabase instance on the runner, applies migrations, runs pgTAP and checks generated types as part of the required `application` check. Documentation-only PRs keep the lightweight path. Startup output is not printed or uploaded because it can contain local keys. No remote Supabase secrets or production connection are needed.
 
 ## Mandatory security fixtures
 
@@ -45,10 +45,14 @@ The Quality workflow runs on pull requests targeting `develop` or `main`, plus m
 
 Only root Markdown files and Markdown under `docs/` qualify for the lightweight path. It runs CI selector tests and formatting with the exact Prettier version from package.json, without installing application dependencies, Chromium or building the app. All other changes, mixed changes and manual runs use the full suite. Deletions and renames participate in detection. Comparison errors fail the job; an empty diff defaults to full checks. There are no workflow-level path exclusions that could leave a required check pending.
 
-Application checks: clean npm install from lockfile, quality checks, production Next build and Chromium smoke tests. Add real database jobs with the first migration; do not claim them before they run. OpenNext build is an independent compatibility gate. Worker runtime and quota measurements are required before pilot, as are recovery rehearsal and privacy review of logs.
+Application checks: clean npm install from lockfile, quality checks, production Next build and Chromium smoke tests. Database checks use real local Supabase on the ephemeral Linux runner; a configured workflow is not evidence of a successful remote run. OpenNext build is an independent compatibility gate. Worker runtime and quota measurements are required before pilot, as are recovery rehearsal and privacy review of logs.
 
 The workflow change itself requires the full suite once. Already-started runs retain the old workflow and must finish or be canceled manually in GitHub. The lighter path applies to subsequent documentation-only PRs once this workflow is in use. Measure remote timing before adding browser caches or a container image.
 
 ## Definition of done
 
 Acceptance criteria passed; backend authorization verified; error states implemented; no known integrity defects; documentation updated. Report commands/results and blockers honestly. A skipped test is not a pass. Production deployment is a separate action from local feature acceptance.
+
+## Generated database types
+
+Run `npm run db:migrate` against the running local instance, then `npm run db:types`. The script invokes the pinned Supabase CLI with `--local --schema public` and formats its output with the existing Prettier configuration. Commit `src/lib/supabase/database.types.ts` with the corresponding migration; never edit generated definitions manually. `npm run db:types:check` compares live generation without modifying the file and fails on drift, missing files or generation errors. These structural types do not encode grants, RLS or CHECK constraints and are not authorization guarantees.

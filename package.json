@@ -23,7 +23,10 @@
     "cf:dry-run": "wrangler deploy --dry-run",
     "db:start": "supabase start",
     "db:stop": "supabase stop",
-    "db:test": "supabase test db"
+    "db:test": "supabase test db",
+    "db:migrate": "supabase migration up --local",
+    "db:types": "node scripts/database-types.mjs",
+    "db:types:check": "node scripts/database-types.mjs --check"
   },
   "overrides": {
     "@node-minify/core": {
