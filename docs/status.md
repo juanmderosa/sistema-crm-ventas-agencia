@@ -1,5 +1,19 @@
 # Estado de entrega
 
+## Autenticación — incremento 1: login y sesión (2026-10-27)
+
+En `codex/auth-membership-access`: `/login` con React Hook Form/Zod, Server Actions de login/logout y `/cuenta` con validación de identidad en Auth desde el servidor. Inicio/cierre de sesión por cookies HttpOnly, SameSite=Lax; Secure en configuración HTTPS de producción. Proxy de Next.js renueva cookies antes del render y conserva headers para evitar caché de respuestas privadas. Navegación completa tras login/logout para descartar memoria cliente. No existe todavía QueryClient privado ni acceso al panel por membresías.
+
+Agregados con versiones exactas y lockfile: `@supabase/supabase-js` 2.118.0, `@supabase/ssr` 0.12.7, `react-hook-form` 7.91.0, `@hookform/resolvers` 6.0.1 y `server-only` 0.0.1. Justificación: SDK/sesiones SSR, formulario validado y barrera de imports de servidor. Instalación reportó 0 vulnerabilidades; se conservaron los avisos existentes de scripts de instalación. Sin actualización de OpenNext, override de glob ni otras dependencias directas.
+
+Se corrigió la configuración pública de `.env.local` (no versionada): contenía una conexión PostgreSQL en lugar de la URL HTTP de API. La aplicación valida URL/clave pública y lee la configuración al ejecutar, evitando fijar un entorno dentro del build del servidor. El proveedor email local estaba deshabilitado; se habilitó en `auth.email` conservando `auth.enable_signup = false`. Supabase se reinició conservando volúmenes, sin reset ni borrado de datos existentes.
+
+Pruebas primero: fallaron la validación por ausencia del módulo y el acceso anónimo por ausencia de la ruta protegida. Después aprobaron formato, lint, TypeScript, 4 pruebas unitarias, 8 pruebas del selector CI, 18 E2E con Auth real en escritorio/móvil, 105 comprobaciones pgTAP, comparación de tipos y build Next.js. E2E verifica credenciales, persistencia, logout, renovación real de cookies, cookie falsificada y rechazo del registro público. Fixtures Auth/perfiles sintéticos con limpieza exclusiva por ID; credenciales locales de prueba solo en memoria del proceso de tests. Capturas del login vacío revisadas en escritorio/móvil.
+
+OpenNext build y Wrangler dry-run aprobados, sin despliegue (7091.62 KiB / gzip 1460.92 KiB). Los mismos 18 E2E también aprobaron contra Worker local mediante `test:e2e:worker`; se documentó su reproducción manual. Se mantiene la advertencia del adaptador sobre Windows y aparece soporte experimental de Node.js middleware/Proxy en Cloudflare, no mantenido oficialmente por OpenNext: el resultado local no certifica estabilidad de producción. El empaquetador también emitió un aviso sobre `??` redundante en código de validación empaquetado; no se modificaron dependencias para resolverlo. CI conserva E2E sobre Next y empaquetado Cloudflare, sin ejecutar todavía E2E sobre Worker. Se normalizaron finales de línea existentes para Prettier sin cambios de contenido ajenos al alcance y se retiró el cambio automático de `next-env.d.ts`.
+
+Punto de revisión/commit del incremento 1. Después corresponde implementar el contexto de acceso por membresías: una agencia, selección entre varias, ausencia de acceso y entrada mínima de plataforma. Recuperación de contraseña, registro, invitaciones y gestión de usuarios quedan fuera de esta tarea. No se realizaron operaciones de escritura Git ni despliegues; CI remoto de esta entrega pendiente de ejecución por el usuario.
+
 ## Etapa 1 — incremento 2: tipos y CI de base de datos (2026-10-27)
 
 Generado `src/lib/supabase/database.types.ts` desde el esquema público de Supabase local migrado, con el CLI fijado en dependencias y formato Prettier. Nuevos comandos `db:migrate`, `db:types` y `db:types:check`; la comprobación no modifica archivos y falla si faltan, difieren o no se pueden generar. Los tipos describen estructura, no autorizan operaciones ni reemplazan RLS y validaciones.
@@ -49,11 +63,11 @@ Al cierre de etapa 0 no estaban implementados autenticación de aplicación, mig
 
 OpenNext 1.20.13 incorpora @node-minify/core con glob 10.3.3 vulnerable (GHSA-5j98-mcp5-4vw2). Se fija únicamente ese glob a 10.5.0 mediante override; no se ejecutó audit fix --force. Reexaminar el override al actualizar OpenNext. El aviso de deprecación de glob sigue siendo distinto del resultado de auditoría.
 
-React Hook Form, SDK Supabase, Testing Library y Recharts se incorporarán en sus funcionalidades; no se presentan como integrados aún. Los tipos de base de datos se generarán después de aplicar migraciones, nunca manualmente.
+React Hook Form y SDK Supabase se incorporaron con autenticación (ver entrega arriba); Testing Library y Recharts siguen pendientes de sus funcionalidades. Los tipos de base de datos se generaron después de aplicar migraciones, nunca manualmente.
 
 ## Próxima entrega
 
-Revisar el incremento 2 y verificar la corrida remota completa del workflow antes de integrar. Login y administración inicial quedan como tareas posteriores, fuera del alcance aprobado del esquema y aislamiento. Docker Linux está disponible; no usar mocks como sustituto de la verificación de seguridad.
+Revisar/versionar el incremento 1 de autenticación y continuar con el contexto de acceso por membresías. Verificar la corrida remota completa antes de integrar. Administración inicial queda como tarea posterior. Docker Linux está disponible; no usar mocks como sustituto de la verificación de seguridad.
 
 ## Antes del piloto
 
