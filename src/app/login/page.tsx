@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Ingresar · Concesionarias" };
 
 export default async function LoginPage() {
-  if (await getCurrentUser()) redirect("/cuenta");
+  if (await getCurrentUser()) redirect("/panel");
   return (
     <main id="main" className="auth-shell">
       <Link href="/" className="auth-brand">

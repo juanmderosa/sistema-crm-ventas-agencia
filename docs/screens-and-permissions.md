@@ -2,7 +2,7 @@
 
 ## Screen map
 
-Implemented authentication increment 1: `/login` accepts existing email/password accounts and `/cuenta` validates the session on the server, displays only the account email and allows logout. Password recovery and all agency/platform panel routes below remain planned. The account page grants no agency access. The table describes the target product.
+Implemented authentication/access: `/login` accepts existing email/password accounts; `/cuenta` validates the session, displays the account email and allows logout. `/panel` resolves enabled agency access, offers a selector when needed and displays only the actual user, agency and role. `/plataforma` independently verifies its active assignment and displays the actual user/platform role. These are minimal access entries, not business dashboards. Password recovery, user administration and other functional routes below remain planned. The account page grants no agency access. The table describes the target product.
 
 | Route                           | Audience                 | Planned content                                                     |
 | ------------------------------- | ------------------------ | ------------------------------------------------------------------- |

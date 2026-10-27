@@ -13,6 +13,9 @@ export default async function AccountPage() {
         <p className="eyebrow">SESIÓN INICIADA</p>
         <h1 id="account-title">Mi cuenta</h1>
         <p className="auth-description">{user.email}</p>
+        <p>
+          <a href="/panel">Ir a mis accesos</a>
+        </p>
         <LogoutButton />
       </section>
     </main>

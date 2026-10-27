@@ -49,4 +49,6 @@ export async function proxy(request: NextRequest) {
   return response;
 }
 
-export const config = { matcher: ["/login", "/cuenta/:path*"] };
+export const config = {
+  matcher: ["/login", "/cuenta/:path*", "/panel/:path*", "/plataforma/:path*"],
+};
