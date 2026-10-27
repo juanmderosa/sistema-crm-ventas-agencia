@@ -29,3 +29,15 @@
 - Explain skipped/blocked checks. A build does not prove Cloudflare runtime or production readiness.
 - No production deployments, paid services or customer data in fixtures without the appropriate task scope.
 - Update docs/status.md with verified outcomes and remaining work each delivery.
+
+## Git workflow
+
+- The user manages Git operations, remote connections and pushes. Unless explicitly authorized for a specific action, do not stage, commit, create/switch/delete branches, merge, rebase, tag or push. Read-only Git inspection is allowed.
+- For every delivery with file changes, provide a suggested commit title and description in Spanish; do not execute the commit.
+- `main` contains approved production releases. The initial foundations upload is the agreed exception that goes directly to `main`.
+- `develop` is the integration and pre-production branch, initially created from `main` by the user.
+- Implement subsequent work on short-lived feature branches created from `develop`, using the `codex/` prefix and descriptive names such as `codex/crm-seguimiento`, `codex/admin-agencia` and `codex/users-roles`.
+- Feature branches integrate into `develop`; validated releases move from `develop` to `main`. The user performs integrations and branch cleanup.
+- Prefer one concrete functionality per branch rather than permanent branches for entire sections.
+- Before implementation, inspect the current branch. If it is `main`, `develop` or an unrelated feature branch, tell the user which feature branch to create/switch to before making implementation changes. This documentation-only rules update is explicitly authorized on the current checkout.
+- Version the lockfile and migrations with their corresponding changes. Never include secrets, local environment files, build artifacts or database runtime data in suggested commits.

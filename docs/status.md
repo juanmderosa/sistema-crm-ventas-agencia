@@ -1,5 +1,9 @@
 # Estado de entrega
 
+## Reglas de Git (2026-10-27)
+
+Guardadas en `AGENTS.md`: el usuario opera Git; el asistente entrega título y descripción de commit. Flujo `codex/<funcionalidad>` → `develop` → `main`, con carga inicial de fundaciones directamente a `main`. No se ejecutaron operaciones de escritura de Git en esta entrega. Cambio solo documental; verificación de formato, sin repetir pruebas de aplicación.
+
 ## Etapa 0 — fundaciones
 
 Implementado: contrato de código, arquitectura/ADRs, mapa de pantallas, matriz de permisos, modelo lógico, estrategia de pruebas, aplicación base Next.js, TypeScript estricto, Tailwind, configuración shadcn, claves de caché privadas, Vitest, Playwright, pipeline GitHub Actions y configuración OpenNext/Cloudflare. Supabase CLI inicializado con registro público deshabilitado.
