@@ -19,6 +19,12 @@ Local quality command: npm run check (format, ESLint, TypeScript, Vitest). Build
 
 Mocks may isolate UI network behavior; they do not prove permission or database safety. Async server pages are verified through browser requests, not artificial React render mocks.
 
+## Agency authorization foundation
+
+With local Supabase running, apply pending migrations using `npx supabase migration up --local` (no reset), then run `npm run db:test`. The agency/role suite uses pgTAP against PostgreSQL with actual `anon`/`authenticated` roles and synthetic JWT subjects. Fixtures and test-only helpers run inside a transaction ending in ROLLBACK; do not use customer data or reset an existing database to run these tests.
+
+The 105 assertions cover two agencies with superadmin/admin/two active sellers/one inactive seller each, a member with different roles in both agencies, active/inactive platform assignments and a user without membership. Checks include permitted reads, cross-agency denial, private profiles, forged user metadata, inactive agencies, immediate revocation, client write denial, role escalation, constraints and RLS activation. Inventory, Storage, endpoint authentication and concurrency are outside this schema increment and are not certified by these tests. The database CI job and generated types belong to the next reviewed increment; the existing CI does not run pgTAP yet.
+
 ## Mandatory security fixtures
 
 Two agencies, each with superadmin/admin/two sellers, one inactive seller, and draft/published/reserved/sold vehicles. Distinct inquiries and private photos. A platform superadmin has an independent platform role. Test anonymous, each authenticated role and users without membership.
