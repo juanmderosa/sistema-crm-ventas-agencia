@@ -42,6 +42,7 @@ try {
         NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: status.ANON_KEY,
         SUPABASE_TEST_SERVICE_ROLE_KEY: status.SERVICE_ROLE_KEY,
         E2E_WORKER: worker ? "1" : "0",
+        APP_ORIGIN: worker ? "http://127.0.0.1:8787" : "http://127.0.0.1:3100",
       },
     },
   );

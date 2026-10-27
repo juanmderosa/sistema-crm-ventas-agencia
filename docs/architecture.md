@@ -53,6 +53,14 @@ Shared forms disable their fieldset until hydration attaches handlers, and while
 
 Reference: [Supabase SSR client setup](https://supabase.com/docs/guides/auth/server-side/creating-a-client?framework=nextjs), [session/cache behavior](https://supabase.com/docs/guides/auth/server-side/advanced-guide).
 
+### Password recovery
+
+Recovery requests use a request-scoped public-key Auth client without cookies or persistent storage. `APP_ORIGIN` supplies the trusted destination; submitted redirect parameters and Host headers never choose it. The recovery email template links directly to `/recuperar/confirmar?token_hash=...`, using Supabase's `RedirectTo` and `TokenHash` template variables. This supports opening the email in another browser without a PKCE verifier from the initiating browser. Existing and absent accounts receive the same successful request message; service/rate failures remain explicit errors.
+
+GET renders the form without consuming the token. The Server Action validates the password and token shape, verifies the token specifically as `recovery`, changes the authenticated token owner's password and closes the temporary Auth session. No recovery session is installed in browser cookies, and an existing panel session cannot select the password owner. Successful completion signs out the current browser and returns to login. Invalid/expired/used links require a new request; an update failure after verification also requires a new link because verification consumes it. Auth controls single use and expiry; the application uses no recovery table, privileged client or new dependency. Recovery pages are dynamic with no-store and no-referrer headers. New passwords require eight characters in both Zod and local Auth; login preserves compatibility with existing passwords.
+
+The local template and Auth configuration must be applied separately to a hosted project before deployment. See [manual recovery checks](manual-password-recovery.md) and [Supabase email templates](https://supabase.com/docs/guides/auth/auth-email-templates).
+
 ### Product rules
 
 - Vehicle publication (draft/published) is separate from availability (available/reserved/sold).
