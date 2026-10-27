@@ -1,6 +1,6 @@
 # Data model
 
-The table below remains the design baseline for the complete product. Migration `20261027000000_agencies_roles.sql` implements only agencies, profiles, memberships and platform_admins, verified on local Supabase. Database types are not generated yet.
+The table below remains the design baseline for the complete product. Migration `20261027000000_agencies_roles.sql` implements only agencies, profiles, memberships and platform_admins, verified on local Supabase. Types for the public schema are generated from migrated local Supabase in `src/lib/supabase/database.types.ts`; CI checks for drift. They describe database structure, not permission to execute writes.
 
 ## Implemented authorization foundation
 

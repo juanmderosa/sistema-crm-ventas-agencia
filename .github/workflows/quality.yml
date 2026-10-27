@@ -11,7 +11,7 @@ concurrency:
 jobs:
   application:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
         with:
@@ -39,6 +39,23 @@ jobs:
       - name: Check application quality
         if: steps.changes.outputs.docs_only != 'true'
         run: npm run check
+      - name: Start isolated local Supabase
+        if: steps.changes.outputs.docs_only != 'true'
+        shell: bash
+        run: |
+          if ! npm run db:start > "$RUNNER_TEMP/supabase-start.log" 2>&1; then
+            echo "::error::No se pudo iniciar Supabase local. Se omite el log para no exponer claves."
+            exit 1
+          fi
+      - name: Apply database migrations
+        if: steps.changes.outputs.docs_only != 'true'
+        run: npm run db:migrate
+      - name: Verify database isolation and permissions
+        if: steps.changes.outputs.docs_only != 'true'
+        run: npm run db:test
+      - name: Verify generated database types
+        if: steps.changes.outputs.docs_only != 'true'
+        run: npm run db:types:check
       - name: Build application
         if: steps.changes.outputs.docs_only != 'true'
         run: npm run build
