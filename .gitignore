@@ -1,0 +1,15 @@
+node_modules/
+.next/
+.open-next/
+.wrangler/
+out/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+.env*
+!.env.example
+.dev.vars*
+supabase/.temp/
+supabase/.branches/
+npm-debug.log*
