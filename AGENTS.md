@@ -23,6 +23,11 @@
 
 ## Verification and delivery
 
+- Break features into small, independently verifiable tasks before implementation. Define each task's scope, acceptance criteria and applicable checks.
+- Deliver one coherent increment at a time, with an opportunity for the user to commit it before proceeding to the next increment. Prefer several focused commits over one large accumulated change; do not chase an arbitrary commit count.
+- Keep pull requests small and focused too. Several commits do not make an oversized PR reviewable; split large features into safe, incremental PRs.
+- Avoid unrelated refactors or dependency upgrades inside a feature task. If scope grows materially, propose a separate task before expanding the change.
+- Each increment must preserve a working baseline and pass its applicable checks. Add meaningful tests according to risk; documentation-only changes require document checks rather than application tests.
 - Tests first for permissions, isolation and transactional business rules; risk-based testing elsewhere.
 - Use real local Supabase for RLS, Storage and concurrency verification; mocks cannot certify authorization.
 - Run format check, lint, typecheck, tests and build. Run relevant database and E2E tests when introduced.
@@ -39,5 +44,5 @@
 - Implement subsequent work on short-lived feature branches created from `develop`, using the `codex/` prefix and descriptive names such as `codex/crm-seguimiento`, `codex/admin-agencia` and `codex/users-roles`.
 - Feature branches integrate into `develop`; validated releases move from `develop` to `main`. The user performs integrations and branch cleanup.
 - Prefer one concrete functionality per branch rather than permanent branches for entire sections.
-- Before implementation, inspect the current branch. If it is `main`, `develop` or an unrelated feature branch, tell the user which feature branch to create/switch to before making implementation changes. This documentation-only rules update is explicitly authorized on the current checkout.
+- Before editing project files, including documentation, inspect the current branch. If it is `main`, `develop` or an unrelated feature branch, tell the user which feature branch to create/switch to before making changes, unless the user explicitly authorizes an exception for that task.
 - Version the lockfile and migrations with their corresponding changes. Never include secrets, local environment files, build artifacts or database runtime data in suggested commits.

@@ -1,5 +1,9 @@
 # Estado de entrega
 
+## Entregas pequeñas (2026-10-27)
+
+Actualizado `AGENTS.md` en `codex/workflow-small-tasks`: tareas con alcance y aceptación definidos, incrementos verificables con puntos de commit y PR pequeños. Las modificaciones documentales también respetan la rama previa. Cambio solo documental; se comprueba formato, sin repetir pruebas de aplicación. El usuario conserva la ejecución de commits e integraciones.
+
 ## Reglas de Git (2026-10-27)
 
 Guardadas en `AGENTS.md`: el usuario opera Git; el asistente entrega título y descripción de commit. Flujo `codex/<funcionalidad>` → `develop` → `main`, con carga inicial de fundaciones directamente a `main`. No se ejecutaron operaciones de escritura de Git en esta entrega. Cambio solo documental; verificación de formato, sin repetir pruebas de aplicación.
