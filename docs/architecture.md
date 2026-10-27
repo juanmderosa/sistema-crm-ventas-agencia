@@ -35,6 +35,20 @@ Public access exposes a limited projection of published vehicles and public agen
 
 ## Business decisions
 
+### Authentication foundation
+
+Email/password authentication uses Supabase Auth through Server Actions and request-scoped `@supabase/ssr` clients. React Hook Form owns the login form and the shared Zod schema validates both browser input and untrusted action arguments. `server-only` protects infrastructure imports. These dependencies are introduced here because the functionality now uses them; versions and lockfile are exact. No dependency upgrade or change to the OpenNext/glob decisions is part of this increment.
+
+Next.js Proxy validates/refreshes the session on `/login` and `/cuenta` and forwards updated cookies and cache headers. Each account render independently validates the user with Auth `getUser()`. A verified identity is not proof of agency access: `/cuenta` exposes only the authenticated user's email and logout. Agency context, `/panel` and `/plataforma` are deferred to the next increment and must consult authoritative active assignments under RLS.
+
+There is no browser Supabase client or private QueryClient in this increment. Auth cookies are HttpOnly, SameSite=Lax and Secure for production HTTPS Supabase configurations; local HTTP is development-only. Login/logout navigate to a new document to discard any prior client memory. Logout uses local scope (this browser session), not global device logout. Private routes are dynamic and carry `private, no-store` cache headers, including cookie refresh responses. Public configuration is validated at server runtime so tests/deployments can provide their own API URL and public key; privileged keys are rejected. Cloudflare runtime configuration still needs its environment bindings configured and verified before pilot.
+
+The global Auth signup switch remains off. With CLI 2.122.0 the local email flag must be on to enable the password provider; E2E checks verify password login succeeds while public signup remains rejected. Local configuration changes require a data-preserving Supabase restart, never a reset.
+
+Reference: [Supabase SSR client setup](https://supabase.com/docs/guides/auth/server-side/creating-a-client?framework=nextjs), [session/cache behavior](https://supabase.com/docs/guides/auth/server-side/advanced-guide).
+
+### Product rules
+
 - Vehicle publication (draft/published) is separate from availability (available/reserved/sold).
 - Reserved vehicles remain in catalog; sold vehicles retain an informational page but leave listings.
 - Vehicle creator and seller assignment are separate. A seller creating a vehicle is assigned automatically.

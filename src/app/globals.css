@@ -32,6 +32,16 @@ body {
 .brand-dot {
   color: #628349;
 }
+.masthead-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.masthead-actions a {
+  color: var(--foreground);
+  font-size: 14px;
+  text-underline-offset: 4px;
+}
 .environment,
 .eyebrow {
   font-size: 11px;
@@ -160,6 +170,89 @@ footer {
 }
 .skip-link:focus {
   top: 10px;
+}
+.auth-shell {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 48px 22px;
+}
+.auth-brand {
+  display: inline-block;
+  color: var(--foreground);
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 36px;
+  text-decoration: none;
+}
+.auth-card {
+  background: white;
+  padding: clamp(24px, 5vw, 40px);
+  border: 1px solid #d9ded8;
+  border-radius: 16px;
+}
+.auth-card h1 {
+  font-size: clamp(28px, 5vw, 36px);
+  letter-spacing: -1px;
+}
+.auth-card .eyebrow {
+  margin-bottom: 16px;
+}
+.auth-description {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #526259;
+  margin: 20px 0 28px;
+  overflow-wrap: anywhere;
+}
+.auth-form {
+  display: grid;
+  gap: 22px;
+}
+.auth-field label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.auth-field input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid #8a988d;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font: inherit;
+  color: var(--foreground);
+  background: white;
+}
+.auth-field input[aria-invalid="true"] {
+  border-color: #9b3029;
+}
+.auth-button {
+  min-height: 46px;
+  padding: 12px 20px;
+  font: inherit;
+  font-weight: 600;
+  color: white;
+  background: #284b39;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.auth-button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+.auth-shell :focus-visible {
+  outline: 3px solid #527243;
+  outline-offset: 3px;
+}
+.field-error,
+.auth-error {
+  color: #9b3029;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 8px 0 0;
 }
 @media (max-width: 600px) {
   .shell {

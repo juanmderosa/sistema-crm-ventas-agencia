@@ -27,6 +27,18 @@ The 105 assertions cover two agencies with superadmin/admin/two active sellers/o
 
 ## Mandatory security fixtures
 
+### Authentication increment 1
+
+Start local Supabase, apply migrations with `npm run db:migrate`, configure the public HTTP API URL (not the PostgreSQL connection string) and public key in `.env.local`, and build with `npm run build`. Then run `npm run test:e2e`; Chromium must be installed. After changing Auth configuration, restart the local stack with `npm run db:stop` then `npm run db:start`. Do not use `--no-backup` or reset the database.
+
+The E2E wrapper reads local CLI status into memory, validates a loopback API URL, and passes public configuration plus a local-only test service-role key to the Playwright process. It never prints or writes credentials. The web server receives an empty test service-role variable; application code uses only a public key. The test process alone uses the privileged local key to create unique synthetic Auth users/profiles and delete exactly those identities in fixture teardown. There is no broad table cleanup, database reset or remote provisioning. Do not commit `.env.local`, CLI runtime files or `test-results` (traces can contain synthetic credentials).
+
+To check the same flows in the local Worker, run `npm run cf:build`, then start `npx wrangler dev --local --ip 127.0.0.1 --port 8787 --env-file .env.local` in a separate terminal and run `npm run test:e2e:worker`. This mode uses the fixed loopback address and does not start or reuse a Next server. Stop Wrangler afterward. The current CI runs the Next E2E suite and Cloudflare packaging separately; it does not run the Worker E2E command. Local success does not certify deployment or remove OpenNext's experimental Node.js middleware warning.
+
+Acceptance covers login success, generic invalid-credential errors, field validation, private response cache headers, anonymous and forged-cookie denial, persistence across reload, logout and server-side cookie refresh via real local Auth. The refresh test marks the session record expiry stale and redeems a genuine refresh token; it does not wait for JWT expiration or certify production token lifetime behavior. The direct signup test checks that global signup stays disabled while email login works. Tests run on desktop/mobile and capture the empty login screen for visual review. Authentication unit tests cover malformed inputs, bounds and password preservation. These checks do not yet certify agency selection, cross-user cache switching or membership revocation in the UI; those belong to increment 2.
+
+### Full product fixtures
+
 Two agencies, each with superadmin/admin/two sellers, one inactive seller, and draft/published/reserved/sold vehicles. Distinct inquiries and private photos. A platform superadmin has an independent platform role. Test anonymous, each authenticated role and users without membership.
 
 Negative cases: forged agency, cross-agency parent ID, role escalation, unassigned inquiry, draft metadata/photo, direct API access, archived membership. Positive cases accompany every deny test to avoid an accidentally unusable system passing security tests.

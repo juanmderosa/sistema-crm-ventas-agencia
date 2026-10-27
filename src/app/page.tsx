@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const stages = [
   ["01", "Accesos y agencias", "Roles, identidad y aislamiento de datos."],
   ["02", "Inventario", "Vehículos, fotos, vendedores y publicación."],
@@ -17,7 +19,10 @@ export default function HomePage() {
         <span className="brand">
           C<span className="brand-dot">.</span> / Concesionarias
         </span>
-        <span className="environment">DESARROLLO LOCAL</span>
+        <div className="masthead-actions">
+          <span className="environment">DESARROLLO LOCAL</span>
+          <Link href="/login">Ingresar</Link>
+        </div>
       </header>
       <main id="main">
         <section className="intro" aria-labelledby="title">
