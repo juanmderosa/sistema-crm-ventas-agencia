@@ -13,6 +13,9 @@
 - Validate untrusted inputs with Zod. Authorization belongs on the server and in PostgreSQL RLS, never only in navigation.
 - Never expose privileged Supabase keys, log personal data, or trust client-supplied agency/role ownership.
 - Organize by feature. Keep UI, domain rules and data access separate; avoid speculative generic repositories.
+- Define database queries in named, feature-specific data-access functions in separate files (for example, `server/queries.ts`). Context resolvers, actions and UI call those functions instead of constructing queries inline. Reuse the same query function wherever needed; keep authorization and untrusted-response validation explicit. Never use a shared privileged client to achieve reuse.
+- Use shared form wrappers and input components from `src/components/forms` for application forms. Keep labels, input refs, error messages and accessibility attributes in the shared components; React Hook Form still owns form state and Zod owns validation.
+- Declare event handlers as named functions outside JSX. JSX references those handlers; do not put async submission/logout workflows, state transitions or navigation logic inside inline event callbacks.
 - Server Components by default. Add client boundaries only for interaction.
 - TanStack Query owns remote panel state; React Hook Form owns forms; URL owns shareable filters; React owns local interaction.
 - Include agency and user in private query keys. Clear private cache on session/context changes. Never share a QueryClient between server requests.
@@ -28,6 +31,7 @@
 - Keep pull requests small and focused too. Several commits do not make an oversized PR reviewable; split large features into safe, incremental PRs.
 - Avoid unrelated refactors or dependency upgrades inside a feature task. If scope grows materially, propose a separate task before expanding the change.
 - Each increment must preserve a working baseline and pass its applicable checks. Add meaningful tests according to risk; documentation-only changes require document checks rather than application tests.
+- When manual tests require database fixtures, provide ready-to-run SQL setup and narrowly scoped cleanup queries directly, using the supplied test user IDs. Do not require manual Table Editor data entry. Flag duplicate/missing identities before assigning privileges, preserve pre-existing records, and do not execute the SQL unless asked.
 - Tests first for permissions, isolation and transactional business rules; risk-based testing elsewhere.
 - Use real local Supabase for RLS, Storage and concurrency verification; mocks cannot certify authorization.
 - Run format check, lint, typecheck, tests and build. Run relevant database and E2E tests when introduced.

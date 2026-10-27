@@ -1,5 +1,23 @@
 # Estado de entrega
 
+## Autenticación — incremento 2: contexto de acceso (2026-10-27)
+
+En `codex/auth-membership-access`, con el incremento 1 versionado por el usuario en `4c96f85`: login deriva a `/panel`; una membresía activa en una agencia activa abre el contexto, varias ofrecen un selector, ninguna muestra «Sin acceso habilitado». Selección mediante URL `?agency=<uuid>` con validación Zod y revalidación contra las asignaciones actuales en cada solicitud. Se muestran solamente usuario/agencia/rol reales. Entradas inválidas, duplicadas, ajenas o revocadas muestran una denegación genérica sin datos de la agencia.
+
+`/plataforma` requiere una asignación activa independiente y permite comprobar identidad/rol de plataforma; acceso autenticado sin esa asignación devuelve 404. No implementa todavía administración global de agencias. La sesión se verifica en el servidor y la consulta bajo RLS filtra explícitamente al usuario actual; roles o pertenencias suministrados por el cliente no autorizan acceso. Cambios de rol y desactivaciones surten efecto en la siguiente solicitud. Proxy, cookies y headers de caché cubren las nuevas rutas. Cambio de agencia/login/logout mediante navegación completa; no hay QueryClient privado ni caché remoto interactivo aún.
+
+Pruebas primero: fallaron el módulo de selección ausente y la entrada anónima a `/panel` antes de implementar. Formato, lint, TypeScript, 7 pruebas unitarias, build Next.js, 105 comprobaciones pgTAP, comparación de tipos y 30 E2E completos aprobados después del refactor solicitado. Se verificaron foco y asociación accesible de errores en los inputs compartidos. Un fixture de inserción por lote se corrigió para enviar estados activos explícitos en ambos registros. Los conteos de plataforma en pgTAP se limitan a sus IDs sintéticos para convivir con datos manuales locales, conservando las 105 comprobaciones. Fixtures compartidos entre pruebas de sesión y acceso, con usuarios/agencias/membresías sintéticos y limpieza limitada a sus IDs. Sin cambios de dependencias, migraciones, reset, datos de clientes ni operaciones de escritura Git en este incremento.
+
+Revisión solicitada por el usuario: consultas centralizadas en `server/queries.ts`, contexto separado de construcción/validación de queries, wrappers compartidos `Form`/`Input` y handlers nombrados de login/logout fuera del JSX. Reglas asentadas en `AGENTS.md`. Guía manual completa en `docs/manual-auth-access.md`. Capturas de login y selector revisadas. OpenNext build y Wrangler dry-run del código refactorizado aprobados (7172.18 KiB / gzip 1476.71 KiB), sin desplegar. Se conservan las advertencias documentadas de Windows, Proxy experimental y código de validación empaquetado.
+
+Preferencia de prueba manual guardada en `AGENTS.md`: entregar SQL de carga y limpieza acotada directamente cuando hagan falta fixtures, sin exigir carga por Table Editor ni ejecutar las consultas sin pedido. Los UUID de usuarios de prueba suministrados en el chat no se incorporan a archivos versionados. Cambio documental verificado con Prettier; sin repetir pruebas de aplicación ni modificar datos para registrar esta regla.
+
+Guía manual alineada con la carga SQL conjunta: U1 comienza con dos membresías y selector, U2 entra en B y UP ya tiene plataforma habilitada. Se corrigieron expectativas que todavía describían una preparación por etapas. La guía incluye SQL de carga/restauración, cambios de estado y limpieza, usando los correos ficticios para resolver identidades sin versionar sus UUID. Las capturas aportadas por el usuario coinciden con ese estado inicial. Cambio solo documental: formato verificado; no se ejecutaron consultas ni se repitieron pruebas de aplicación.
+
+Worker local: la primera corrida detectó navegaciones lentas y, al repetirla con menos concurrencia, un clic de logout previo a hidratación que no enviaba ninguna solicitud (confirmado en la traza). Se corrigió deshabilitando el fieldset compartido y el logout hasta que los handlers estén disponibles. El modo Worker se limita a dos workers para reducir contención del emulador local, sin aumentar timeouts ni retirar comprobaciones. Después de la corrección aprobaron nuevamente los 30 E2E completos sobre Next y los 12 casos de acceso sobre Worker local. El resultado local no certifica estabilidad/rendimiento de producción ni sustituye CI remoto.
+
+Pendiente de revisión y verificación remota del workflow antes de integrar. El trabajo funcional posterior (recuperación de contraseña, invitaciones, alta/gestión de usuarios y agencias, inventario/CRM) queda fuera de esta tarea.
+
 ## Autenticación — incremento 1: login y sesión (2026-10-27)
 
 En `codex/auth-membership-access`: `/login` con React Hook Form/Zod, Server Actions de login/logout y `/cuenta` con validación de identidad en Auth desde el servidor. Inicio/cierre de sesión por cookies HttpOnly, SameSite=Lax; Secure en configuración HTTPS de producción. Proxy de Next.js renueva cookies antes del render y conserva headers para evitar caché de respuestas privadas. Navegación completa tras login/logout para descartar memoria cliente. No existe todavía QueryClient privado ni acceso al panel por membresías.
@@ -67,7 +85,7 @@ React Hook Form y SDK Supabase se incorporaron con autenticación (ver entrega a
 
 ## Próxima entrega
 
-Revisar/versionar el incremento 1 de autenticación y continuar con el contexto de acceso por membresías. Verificar la corrida remota completa antes de integrar. Administración inicial queda como tarea posterior. Docker Linux está disponible; no usar mocks como sustituto de la verificación de seguridad.
+Revisar/versionar los incrementos de autenticación y contexto de acceso; verificar la corrida remota completa antes de integrar. Administración inicial queda como tarea posterior. Docker Linux está disponible; no usar mocks como sustituto de la verificación de seguridad.
 
 ## Antes del piloto
 

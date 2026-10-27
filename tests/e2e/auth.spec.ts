@@ -1,59 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { combineChunks, createChunks } from "@supabase/ssr";
-import { expect, test as base } from "@playwright/test";
+import { expect } from "@playwright/test";
 import { z } from "zod";
-import type { Database } from "../../src/lib/supabase/database.types";
-
-const test = base.extend<{
-  identity: { email: string; password: string; id: string };
-}>({
-  identity: async ({}, provideIdentity) => {
-    const env = z
-      .object({
-        NEXT_PUBLIC_SUPABASE_URL: z
-          .url()
-          .refine((url) => new URL(url).hostname === "127.0.0.1"),
-        SUPABASE_TEST_SERVICE_ROLE_KEY: z.string().min(1),
-      })
-      .parse(process.env);
-    const admin = createClient<Database>(
-      env.NEXT_PUBLIC_SUPABASE_URL,
-      env.SUPABASE_TEST_SERVICE_ROLE_KEY,
-      {
-        auth: { persistSession: false, autoRefreshToken: false },
-      },
-    );
-    const email = `auth-${randomUUID()}@example.test`;
-    const password = `${randomUUID()}!aA7`;
-    const { data, error } = await admin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-    });
-    if (error || !data.user)
-      throw new Error("No se pudo crear la identidad sintética de prueba.");
-    const id = data.user.id;
-    try {
-      const { error: profileError } = await admin
-        .from("profiles")
-        .insert({ id, display_name: "Usuario de prueba" });
-      if (profileError)
-        throw new Error("No se pudo preparar el perfil sintético.");
-      await provideIdentity({ email, password, id });
-    } finally {
-      const { error: profileError } = await admin
-        .from("profiles")
-        .delete()
-        .eq("id", id);
-      if (profileError)
-        throw new Error("No se pudo retirar el perfil sintético.");
-      const { error: userError } = await admin.auth.admin.deleteUser(id);
-      if (userError)
-        throw new Error("No se pudo retirar la identidad sintética.");
-    }
-  },
-});
+import { test } from "./fixtures";
 
 test("anonymous requests cannot render account details", async ({ page }) => {
   const response = await page.goto("/cuenta");
@@ -70,7 +20,11 @@ test("real login persists across reload and logout removes access", async ({
   await page.getByLabel("Correo electrónico").fill(identity.email);
   await page.getByLabel("Contraseña", { exact: true }).fill(identity.password);
   await page.getByRole("button", { name: "Ingresar", exact: true }).click();
-  await expect(page).toHaveURL(/\/cuenta$/);
+  await expect(page).toHaveURL(/\/panel$/);
+  await expect(
+    page.getByRole("heading", { name: "Sin acceso habilitado" }),
+  ).toBeVisible();
+  await page.getByRole("link", { name: "Mi cuenta" }).click();
   await expect(page.getByRole("heading", { name: "Mi cuenta" })).toBeVisible();
   await expect(page.getByText(identity.email, { exact: true })).toBeVisible();
   const response = await page.reload();
@@ -147,6 +101,19 @@ test("login validates fields and fits a narrow viewport", async ({
   await page.getByRole("button", { name: "Ingresar", exact: true }).click();
   await expect(page.getByText("Ingresá un correo válido.")).toBeVisible();
   await expect(page.getByText("Ingresá tu contraseña.")).toBeVisible();
+  await expect(page.getByLabel("Correo electrónico")).toBeFocused();
+  await expect(page.getByLabel("Correo electrónico")).toHaveAttribute(
+    "aria-invalid",
+    "true",
+  );
+  await expect(page.getByLabel("Correo electrónico")).toHaveAttribute(
+    "aria-describedby",
+    "email-error",
+  );
+  await expect(page.getByLabel("Contraseña", { exact: true })).toHaveAttribute(
+    "aria-describedby",
+    "password-error",
+  );
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth > innerWidth,
@@ -163,7 +130,7 @@ test("proxy renews an expired session record through real Auth and persists cook
   await page.getByLabel("Correo electrónico").fill(identity.email);
   await page.getByLabel("Contraseña", { exact: true }).fill(identity.password);
   await page.getByRole("button", { name: "Ingresar", exact: true }).click();
-  await expect(page).toHaveURL(/\/cuenta$/);
+  await expect(page).toHaveURL(/\/panel$/);
   const cookies = await context.cookies();
   const authCookie = cookies.find(
     (cookie) =>

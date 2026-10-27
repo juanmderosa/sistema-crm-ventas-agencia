@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Form } from "@/components/forms/form";
+import { Input } from "@/components/forms/input";
 import { loginSchema, type LoginInput } from "../schemas";
 import { login } from "../server/actions";
 
@@ -16,61 +18,44 @@ export function LoginForm() {
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   });
+
+  async function handleLogin(values: LoginInput) {
+    setError(undefined);
+    try {
+      const result = await login(values);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      // A full navigation discards any previous in-memory private state.
+      window.location.replace("/panel");
+    } catch {
+      setError("No pudimos conectar. Revisá tu conexión y volvé a intentar.");
+    }
+  }
+
+  const onSubmit = handleSubmit(handleLogin);
+
   return (
-    <form
-      className="auth-form"
-      noValidate
-      onSubmit={handleSubmit(async (values) => {
-        setError(undefined);
-        try {
-          const result = await login(values);
-          if (!result.ok) {
-            setError(result.error);
-            return;
-          }
-          // A full navigation discards any previous in-memory private state.
-          window.location.replace("/cuenta");
-        } catch {
-          setError(
-            "No pudimos conectar. Revisá tu conexión y volvé a intentar.",
-          );
-        }
-      })}
-    >
-      <div className="auth-field">
-        <label htmlFor="email">Correo electrónico</label>
-        <input
-          id="email"
-          type="email"
-          autoComplete="username"
-          maxLength={254}
-          aria-invalid={!!errors.email}
-          aria-describedby={errors.email ? "email-error" : undefined}
-          {...register("email")}
-        />
-        {errors.email && (
-          <p id="email-error" className="field-error">
-            {errors.email.message}
-          </p>
-        )}
-      </div>
-      <div className="auth-field">
-        <label htmlFor="password">Contraseña</label>
-        <input
-          id="password"
-          type="password"
-          autoComplete="current-password"
-          maxLength={1024}
-          aria-invalid={!!errors.password}
-          aria-describedby={errors.password ? "password-error" : undefined}
-          {...register("password")}
-        />
-        {errors.password && (
-          <p id="password-error" className="field-error">
-            {errors.password.message}
-          </p>
-        )}
-      </div>
+    <Form noValidate onSubmit={onSubmit} disabled={isSubmitting}>
+      <Input
+        id="email"
+        label="Correo electrónico"
+        type="email"
+        autoComplete="username"
+        maxLength={254}
+        error={errors.email?.message}
+        {...register("email")}
+      />
+      <Input
+        id="password"
+        label="Contraseña"
+        type="password"
+        autoComplete="current-password"
+        maxLength={1024}
+        error={errors.password?.message}
+        {...register("password")}
+      />
       {error && (
         <p role="alert" className="auth-error">
           {error}
@@ -79,6 +64,6 @@ export function LoginForm() {
       <button type="submit" className="auth-button" disabled={isSubmitting}>
         {isSubmitting ? "Ingresando…" : "Ingresar"}
       </button>
-    </form>
+    </Form>
   );
 }
