@@ -1,5 +1,11 @@
 # Estado de entrega
 
+## CI por alcance (2026-10-27)
+
+En `codex/ci-workflow`: workflow limitado a PR hacia `develop`/`main` y ejecución manual; cancelación de corridas anteriores del mismo PR; check `application` conservado. Los cambios exclusivamente Markdown raíz o `docs/**/*.md` verifican formato sin `npm ci`, Chromium ni builds. Cualquier otro archivo activa la suite completa. La selección usa el diff completo del PR, incluyendo eliminaciones y renombres, con pruebas de regresión sin dependencias adicionales.
+
+Verificación local: 8 pruebas del selector, YAML parseado, formato, lint, TypeScript, 2 pruebas de aplicación y build Next.js aprobados. El build requirió salir del aislamiento tras un error EPERM en `.next`. No se repitieron navegador ni empaquetado Cloudflare local porque no cambió la aplicación ni sus dependencias; se conservan ambos controles para PR de código. No se ejecutaron ni cancelaron Actions remotas; las corridas ya iniciadas conservan la configuración anterior. Esta modificación del workflow requiere una corrida completa; la mejora documental se observa en PR posteriores.
+
 ## Reglas de Git (2026-10-27)
 
 Guardadas en `AGENTS.md`: el usuario opera Git; el asistente entrega título y descripción de commit. Flujo `codex/<funcionalidad>` → `develop` → `main`, con carga inicial de fundaciones directamente a `main`. No se ejecutaron operaciones de escritura de Git en esta entrega. Cambio solo documental; verificación de formato, sin repetir pruebas de aplicación.
