@@ -1,23 +1,56 @@
 name: Quality
 on:
-  push:
   pull_request:
+    branches: [develop, main]
+  workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   application:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
-      - run: npm ci
-      - run: npm run check
-      - run: npm run build
-      - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e
-      - run: npm run cf:build
-      - run: npm run cf:dry-run
+      - name: Verify CI change detection
+        run: node --test .github/scripts/ci-changes.test.mjs
+      - name: Select checks
+        id: changes
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node .github/scripts/ci-changes.mjs
+      - name: Check documentation formatting
+        if: steps.changes.outputs.docs_only == 'true'
+        env:
+          PRETTIER_VERSION: ${{ steps.changes.outputs.prettier_version }}
+        run: npx --yes "prettier@$PRETTIER_VERSION" --check .
+      - name: Install application dependencies
+        if: steps.changes.outputs.docs_only != 'true'
+        run: npm ci
+      - name: Check application quality
+        if: steps.changes.outputs.docs_only != 'true'
+        run: npm run check
+      - name: Build application
+        if: steps.changes.outputs.docs_only != 'true'
+        run: npm run build
+      - name: Install Chromium and system dependencies
+        if: steps.changes.outputs.docs_only != 'true'
+        run: npx playwright install --with-deps chromium
+      - name: Run browser tests
+        if: steps.changes.outputs.docs_only != 'true'
+        run: npm run test:e2e
+      - name: Build Cloudflare Worker
+        if: steps.changes.outputs.docs_only != 'true'
+        run: npm run cf:build
+      - name: Verify Worker packaging without deployment
+        if: steps.changes.outputs.docs_only != 'true'
+        run: npm run cf:dry-run

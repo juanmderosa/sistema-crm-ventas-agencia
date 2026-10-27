@@ -1,6 +1,18 @@
-# Initial logical data model (not a deployed schema)
+# Data model
 
-This is the migration design baseline. No SQL migration or generated database types are claimed in stage 0. Introduce executable schema alongside real RLS tests in stage 1.
+The table below remains the design baseline for the complete product. Migration `20261027000000_agencies_roles.sql` implements only agencies, profiles, memberships and platform_admins, verified on local Supabase. Database types are not generated yet.
+
+## Implemented authorization foundation
+
+Agencies contain UUID, canonical unique slug, name, active state, positive finite numeric ARS/USD rate and creation timestamp. Profiles contain the Auth user ID, display name and creation timestamp; contact fields and automatic Auth provisioning are deferred. Memberships contain UUID, agency/user references, role, active state and creation timestamp, with unique agency/user and agency/id pairs. Platform assignments contain user reference, active state and creation timestamp. Foreign keys restrict deletion rather than silently removing assignments.
+
+All four tables enable RLS. Anonymous clients have no table access. Authenticated clients have SELECT only, including platform administrators; there are no client mutation policies or provisioning endpoints. An active member of an active agency reads that agency and their own membership. Active agency admins/superadmins also read the agency roster, including inactive memberships. Members cannot read other users' profiles; each user can read their own profile even without an active membership. Active platform administrators can read all four tables, including inactive agencies and assignments.
+
+Users can belong to multiple agencies with independent roles. Inactivating an agency or membership removes the access derived from that membership; inactivating a platform assignment removes global access. Checks read current database state rather than user-editable JWT metadata. The two narrowly scoped SECURITY DEFINER helpers live in the unexposed `private` schema, use an empty fixed search_path, and derive the user from auth.uid(). Only authenticated clients receive schema usage/function execution; they cannot supply another user ID or create objects there.
+
+Role management, audited writes, exchange-rate history, public agency projections, login and application authorization adapters are separate increments. The full permission matrix describes the target product, not available write operations in this foundation.
+
+## Planned product entities
 
 | Entity              | Key relationships and invariants                                                                                                       |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |

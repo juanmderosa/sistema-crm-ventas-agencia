@@ -19,6 +19,12 @@ Local quality command: npm run check (format, ESLint, TypeScript, Vitest). Build
 
 Mocks may isolate UI network behavior; they do not prove permission or database safety. Async server pages are verified through browser requests, not artificial React render mocks.
 
+## Agency authorization foundation
+
+With local Supabase running, apply pending migrations using `npx supabase migration up --local` (no reset), then run `npm run db:test`. The agency/role suite uses pgTAP against PostgreSQL with actual `anon`/`authenticated` roles and synthetic JWT subjects. Fixtures and test-only helpers run inside a transaction ending in ROLLBACK; do not use customer data or reset an existing database to run these tests.
+
+The 105 assertions cover two agencies with superadmin/admin/two active sellers/one inactive seller each, a member with different roles in both agencies, active/inactive platform assignments and a user without membership. Checks include permitted reads, cross-agency denial, private profiles, forged user metadata, inactive agencies, immediate revocation, client write denial, role escalation, constraints and RLS activation. Inventory, Storage, endpoint authentication and concurrency are outside this schema increment and are not certified by these tests. The database CI job and generated types belong to the next reviewed increment; the existing CI does not run pgTAP yet.
+
 ## Mandatory security fixtures
 
 Two agencies, each with superadmin/admin/two sellers, one inactive seller, and draft/published/reserved/sold vehicles. Distinct inquiries and private photos. A platform superadmin has an independent platform role. Test anonymous, each authenticated role and users without membership.
@@ -35,7 +41,13 @@ Reject over-limit files, deceptive extension/MIME, malformed payloads, dimension
 
 ## CI and runtime
 
-Pull requests: clean npm install from lockfile, quality checks, production Next build and Chromium smoke tests. Add real database jobs with the first migration; do not claim them before they run. OpenNext build is an independent compatibility gate. Worker runtime and quota measurements are required before pilot, as are recovery rehearsal and privacy review of logs.
+The Quality workflow runs on pull requests targeting `develop` or `main`, plus manual dispatch. It does not run on every push or repeat after merge. New commits to the same PR cancel older runs. Keep the `application` check required in branch protection; the workflow always reports it, including documentation-only PRs.
+
+Only root Markdown files and Markdown under `docs/` qualify for the lightweight path. It runs CI selector tests and formatting with the exact Prettier version from package.json, without installing application dependencies, Chromium or building the app. All other changes, mixed changes and manual runs use the full suite. Deletions and renames participate in detection. Comparison errors fail the job; an empty diff defaults to full checks. There are no workflow-level path exclusions that could leave a required check pending.
+
+Application checks: clean npm install from lockfile, quality checks, production Next build and Chromium smoke tests. Add real database jobs with the first migration; do not claim them before they run. OpenNext build is an independent compatibility gate. Worker runtime and quota measurements are required before pilot, as are recovery rehearsal and privacy review of logs.
+
+The workflow change itself requires the full suite once. Already-started runs retain the old workflow and must finish or be canceled manually in GitHub. The lighter path applies to subsequent documentation-only PRs once this workflow is in use. Measure remote timing before adding browser caches or a container image.
 
 ## Definition of done
 
