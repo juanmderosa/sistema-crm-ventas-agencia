@@ -46,9 +46,16 @@ export async function proxy(request: NextRequest) {
   response.headers.set("Cache-Control", "private, no-store");
   response.headers.set("Pragma", "no-cache");
   response.headers.set("Expires", "0");
+  response.headers.set("Referrer-Policy", "no-referrer");
   return response;
 }
 
 export const config = {
-  matcher: ["/login", "/cuenta/:path*", "/panel/:path*", "/plataforma/:path*"],
+  matcher: [
+    "/login",
+    "/recuperar/:path*",
+    "/cuenta/:path*",
+    "/panel/:path*",
+    "/plataforma/:path*",
+  ],
 };

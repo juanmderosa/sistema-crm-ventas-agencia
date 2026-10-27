@@ -47,6 +47,16 @@ Pure domain tests check the selection states, but only real Supabase E2E and pgT
 
 Worker-mode browser checks use two Playwright workers to avoid contention in local workerd. Assertions and timeouts are unchanged; this is functional verification, not a production load test. Next-mode concurrency is unchanged.
 
+### Password recovery
+
+Development and production startup need separate checks: Next dev validates the HMR WebSocket origin, while the production E2E server has no HMR connection. `next.config.ts` explicitly allows only the additional loopback host `127.0.0.1`, used in recovery mail. After changing that configuration, check input focus, typing and validation on both `localhost:3000` and `127.0.0.1:3000` with `npm run dev`; production E2E alone does not cover this failure. Keep the shared hydration guard: a blocked development connection must be corrected at its source.
+
+The recovery suite sends actual recovery mail through local Auth and reads the unique synthetic recipient through Mailpit's local API. It opens the emailed link in a separate browser context with a different user's existing session, checks that only the email owner's password changes, rejects the old password, accepts the new password, rejects reuse, and confirms logout. Other cases cover absent accounts, malformed/duplicate/forged tokens, ordinary-session denial, eight-character/matching-password validation, ignored external redirect parameters and private/no-referrer response headers. After following the client-side login link, the test waits for the recovery heading before filling the email: both pages have an email input, so filling immediately can target the departing login form.
+
+`APP_ORIGIN` is runtime configuration validated as a bare HTTPS origin (HTTP loopback only for local development). The E2E wrapper sets it to the selected Next/Worker origin; no submitted URL controls email destinations. Domain tests cover origin restrictions, token shape, password preservation/confirmation and server submission proof. The local Auth configuration also enforces eight characters. Recovery clients use only public credentials with in-memory sessions; fixture provisioning remains confined to the test process. GET does not consume a token; verification and update occur together on submission. An Auth failure after token consumption requires a new email.
+
+Real one-hour expiry is a separate manual check in [the recovery guide](manual-password-recovery.md); the automated suite does not wait an hour or claim that an altered/reused token proves time-based expiry. Remote SMTP, deployment configuration and real mailbox delivery are not certified by local Mailpit tests. No database fixture SQL is needed for the manual recovery flow when an Auth test account already exists.
+
 ### Full product fixtures
 
 Two agencies, each with superadmin/admin/two sellers, one inactive seller, and draft/published/reserved/sold vehicles. Distinct inquiries and private photos. A platform superadmin has an independent platform role. Test anonymous, each authenticated role and users without membership.

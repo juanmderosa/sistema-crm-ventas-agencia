@@ -1,5 +1,25 @@
 # Estado de entrega
 
+## Corrección — formularios bloqueados en desarrollo (2026-10-27)
+
+Reproducido en el servidor de desarrollo real: `localhost:3000` hidrataba correctamente, pero `127.0.0.1:3000` rechazaba la conexión WebSocket de HMR. React no terminaba de hidratar y el fieldset compartido permanecía deshabilitado. Se agregó únicamente `127.0.0.1` a `allowedDevOrigins` en `next.config.ts`; se conserva la protección de hidratación y no se amplía la lista a dominios arbitrarios. Los E2E previos usaban `next start`, por eso no cubrían este bloqueo exclusivo de `next dev`.
+
+Verificado con Chromium en el servidor `npm run dev`: foco mediante clic, escritura y validaciones de ambos formularios de recuperación en `localhost` y `127.0.0.1`, con anchos de escritorio/celular, sin errores de JavaScript ni de WebSocket. No se enviaron correos ni se modificaron cuentas durante esa comprobación. Formato, lint, TypeScript, 11 pruebas unitarias y build Next.js aprobados. Se retiró el cambio automático de next-env.d.ts. Guía manual y contrato de pruebas actualizados con la comprobación de desarrollo. Sin cambios en Auth/RLS, dependencias o formularios; no corresponde repetir pgTAP ni los flujos completos de correo/Worker por esta configuración exclusiva de desarrollo. No se ejecutaron operaciones de escritura Git.
+
+## Autenticación — incremento 3: recuperación de contraseña (2026-10-27)
+
+En `codex/auth-password-recovery`: enlace desde login, solicitud con respuesta genérica para cuentas existentes/ausentes, correo local personalizado y formulario de contraseña/confirmación con mínimo de ocho caracteres. Formularios e inputs compartidos, handlers nombrados y adaptador Auth separado. Sin tablas, migraciones, dependencias nuevas ni cambios de lockfile.
+
+El enlace funciona en otro navegador: GET no lo consume; al guardar se verifica específicamente como recuperación en Auth, se actualiza únicamente la identidad de ese token y se cierra su sesión temporal en memoria. No se instala una sesión de recuperación en el navegador. Una sesión común no autoriza el cambio. Al finalizar se cierra también la sesión del navegador y se vuelve al login. Enlaces incompletos, alterados, duplicados o utilizados fallan explícitamente. Origen de correo definido por `APP_ORIGIN`, validado y separado de Host/`next` enviados por el cliente; respuestas sin caché y sin referente.
+
+Aplicada configuración de Auth únicamente a Supabase local mediante reinicio conservando volúmenes: plantilla de correo y mínimo de ocho caracteres. Configurado el origen local en el archivo de entorno ignorado, sin imprimir claves. La [guía manual](manual-password-recovery.md) utiliza una cuenta Auth de prueba existente: no necesita SQL ni filas de negocio y explica la limpieza, los casos negativos y la configuración remota pendiente.
+
+Verificado: formato, lint, TypeScript, 11 pruebas unitarias, 8 del selector CI, 105 comprobaciones pgTAP, comparación de tipos, build Next.js y 36 casos E2E escritorio/celular con Auth y Mailpit reales. La corrida completa local usó dos workers para limitar contención; no se aumentaron timeouts ni se eliminaron casos. Se corrigió una carrera de la prueba esperando el encabezado de recuperación antes de llenar un correo que también existe en la pantalla de login. Se revisó captura móvil sin desbordamiento.
+
+OpenNext y Wrangler dry-run aprobados: 7226.55 KiB / gzip 1481.17 KiB. Worker local: seis casos de recuperación aprobados en escritorio/celular; se detuvo después. Se conservan las advertencias de compatibilidad parcial con Windows y soporte experimental de Node.js Proxy en OpenNext. No se desplegó ni se operó Git remoto. El vencimiento real tras una hora queda como comprobación manual documentada: las pruebas automáticas de tokens alterados/reutilizados no lo certifican. SMTP remoto, plantilla y URLs del proyecto remoto y GitHub Actions requieren verificación antes de integrar/desplegar.
+
+Se normalizaron finales de línea para satisfacer Prettier, sin cambios de contenido ajenos al alcance, y se retiró el cambio automático de `next-env.d.ts`. No se ejecutaron operaciones de escritura Git. Próximo paso: validación manual del usuario y commit del incremento antes de continuar con otra funcionalidad.
+
 ## Autenticación — incremento 2: contexto de acceso (2026-10-27)
 
 En `codex/auth-membership-access`, con el incremento 1 versionado por el usuario en `4c96f85`: login deriva a `/panel`; una membresía activa en una agencia activa abre el contexto, varias ofrecen un selector, ninguna muestra «Sin acceso habilitado». Selección mediante URL `?agency=<uuid>` con validación Zod y revalidación contra las asignaciones actuales en cada solicitud. Se muestran solamente usuario/agencia/rol reales. Entradas inválidas, duplicadas, ajenas o revocadas muestran una denegación genérica sin datos de la agencia.
