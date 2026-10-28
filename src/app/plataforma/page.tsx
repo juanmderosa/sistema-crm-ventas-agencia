@@ -12,6 +12,9 @@ export default async function PlatformPage() {
     <AccessShell>
       <p className="eyebrow">PLATAFORMA</p>
       <h1>Acceso de plataforma</h1>
+      <nav className="agency-actions" aria-label="Administración">
+        <a href="/plataforma/agencias">Administrar agencias</a>
+      </nav>
       <dl className="access-details">
         <div>
           <dt>Usuario</dt>

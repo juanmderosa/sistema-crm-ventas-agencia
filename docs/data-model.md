@@ -12,6 +12,12 @@ Users can belong to multiple agencies with independent roles. Inactivating an ag
 
 Role management, audited writes, exchange-rate history, public agency projections, login and application authorization adapters are separate increments. The full permission matrix describes the target product, not available write operations in this foundation.
 
+## Platform creation writes
+
+Migration `20261027010000_platform_agency_creation.sql` adds `audit_events` with UUID, agency reference, actor profile reference, action `agency.created` and timestamp. Both references restrict deletion. Its current action constraint intentionally covers only this delivered operation; other audit events remain future schema changes. RLS permits active platform reads only, with no authenticated mutation grants.
+
+The authenticated RPC `create_agency(text,text,text)` checks and locks the caller's active platform assignment, validates canonical slug/name/exact decimal rate, and creates an active agency plus its audit event in one transaction. It cannot accept a client-selected actor or assign memberships. No broader write permissions were added to existing tables. Database types are regenerated from the migrated local instance. The read-only foundation descriptions above describe the original migration; this RPC is the new, narrowly scoped mutation boundary.
+
 ## Planned product entities
 
 | Entity              | Key relationships and invariants                                                                                                       |

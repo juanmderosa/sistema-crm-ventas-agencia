@@ -340,6 +340,33 @@ footer {
   font-weight: 600;
   overflow-wrap: anywhere;
 }
+.agency-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin: 26px 0;
+}
+.field-help {
+  color: #526259;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: -12px 0 0;
+}
+.platform-agencies {
+  list-style: none;
+  padding: 0;
+}
+.platform-agencies li {
+  display: block;
+  margin: 18px 0;
+  padding: 20px;
+  border: 1px solid #d9ded8;
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+}
+.platform-agencies h2 {
+  font-size: 22px;
+}
 .access-identity {
   margin: 28px 0 0;
   color: #526259;
