@@ -65,6 +65,12 @@ Real one-hour expiry is a separate manual check in [the recovery guide](manual-p
 
 See [manual platform creation](manual-agency-creation.md) for bootstrap SQL, permission checks and narrowly scoped cleanup preserving Auth users/profiles. A real platform actor is required before the first UI creation. Creation does not assign an agency superadmin or test invitation flows. HTTP `ERR_NETWORK_IO_SUSPENDED` during a local run invalidates that run; repeat after connectivity resumes without increasing application/test timeouts.
 
+### Initial superadministrator assignment
+
+The 22 assertions in superadmin_assignment.test.sql first fail without the RPC, then verify anonymous/forged/agency-role/revoked denial, inactive agency and missing profile rejection, fixed active role, actor/target attribution, immediate RLS access, prevention of replacement and silent promotion, preservation of inactive owner history, direct-write denial and full rollback under a synthetic audit failure. Prior suites remain enabled (157 SQL assertions total).
+
+The new E2E suite verifies UI assignment to another real local Auth identity/profile, shared Select focus/errors, persistent owner display, full selected ID visibility, actual agency access after reload, denied platform access for the new agency owner, denied anonymous/ordinary/revoked actors, inactive/invalid routes, and two distinct simultaneous targets producing exactly one membership/event. It uses public credentials and user sessions for actual writes. Privileged clients are fixture-only, with exact agency-scoped audit/membership cleanup before removing identities. Manual setup and scoped cleanup are in [the assignment guide](manual-superadmin-assignment.md). New account creation, email invitations and owner replacement are not certified by this increment.
+
 ### Full product fixtures
 
 Two agencies, each with superadmin/admin/two sellers, one inactive seller, and draft/published/reserved/sold vehicles. Distinct inquiries and private photos. A platform superadmin has an independent platform role. Test anonymous, each authenticated role and users without membership.

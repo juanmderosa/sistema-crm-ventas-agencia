@@ -69,6 +69,14 @@ Migration `20261027010000_platform_agency_creation.sql` adds only the restricted
 
 ARS/USD input remains decimal text through validation and RPC and is cast to PostgreSQL numeric only after rejecting excess size/precision, exponents, nonfinite values and nonpositive rates. List reads cast numeric to text, preserving precision without JavaScript floating-point conversion. A unique canonical slug rejects simultaneous duplicate creation. New agencies are active with no memberships; owner assignment, invitations, editing/deactivation and rate-change history are separate increments. The first platform assignment remains an explicit local bootstrap, not a public self-promotion endpoint.
 
+### Initial agency superadministrator
+
+`/plataforma/agencias/[agencyId]/superadministrador` verifies platform access and shows either the recorded owner(s), inactive-agency state, or a paginated selector of existing profiles. It identifies users by display name and UUID, with a full selected-identity summary that remains readable on mobile. RHF/Zod owns the form; the shared Select supports labels, refs and accessible errors. Profiles are read server-side in pages of twenty; URL owns pagination and no browser Auth admin client or client remote cache is introduced.
+
+Migration `20261028000000_initial_agency_superadmin.sql` adds the restricted `assign_initial_agency_superadmin` RPC. The function locks the actor's active platform assignment and then the active agency, serializing competing initial assignments. It verifies an existing profile, rejects any prior superadministrator (including inactive history), and inserts a new active membership with a fixed agency_superadmin role. Existing memberships are never promoted, replaced or reactivated. Actor/role/activity come from server/database rules rather than request arguments. The membership and `membership.superadmin_assigned` event commit together; audit target_user_id references the assigned profile, separately from actor_id. Audit action constraints retain compatibility with earlier agency.created events, whose target is null. Direct client writes and audit RLS remain unchanged.
+
+This increment handles existing profiles only; creating Auth accounts, invitations, replacing owners, reactivation and managing other roles remain separate work. Profiles without email are still identifiable by UUID; the application does not query auth.users or use a privileged key to discover addresses. Bootstrap/manual SQL preserves existing Auth identities/profiles.
+
 ### Product rules
 
 - Vehicle publication (draft/published) is separate from availability (available/reserved/sold).

@@ -46,6 +46,7 @@ export type Database = {
           agency_id: string;
           created_at: string;
           id: string;
+          target_user_id: string | null;
         };
         ComputedFields: never;
         Insert: {
@@ -54,6 +55,7 @@ export type Database = {
           agency_id: string;
           created_at?: string;
           id?: string;
+          target_user_id?: string | null;
         };
         Update: {
           action?: string;
@@ -61,6 +63,7 @@ export type Database = {
           agency_id?: string;
           created_at?: string;
           id?: string;
+          target_user_id?: string | null;
         };
         Relationships: [
           {
@@ -75,6 +78,13 @@ export type Database = {
             columns: ["agency_id"];
             isOneToOne: false;
             referencedRelation: "agencies";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "audit_events_target_user_id_fkey";
+            columns: ["target_user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
         ];
@@ -173,6 +183,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      assign_initial_agency_superadmin: {
+        Args: { p_agency_id: string; p_user_id: string };
+        Returns: string;
+      };
       create_agency: {
         Args: { p_ars_per_usd: string; p_name: string; p_slug: string };
         Returns: string;
