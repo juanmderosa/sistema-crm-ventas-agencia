@@ -2,6 +2,8 @@
 
 ## Screen map
 
+Implemented authentication/access: `/login` accepts existing email/password accounts; `/cuenta` validates the session, displays the account email and allows logout. `/recuperar` and `/recuperar/confirmar` implement password recovery. `/panel` resolves enabled agency access, offers a selector when needed and displays only the actual user, agency and role. `/plataforma` independently verifies its active assignment and links to agency administration. `/plataforma/agencias` lists agencies with pagination; `/plataforma/agencias/nueva` creates an active agency and records its author atomically. Owner assignment and user administration remain planned. The account page grants no agency access. The table describes the target product.
+
 | Route                           | Audience                 | Planned content                                                     |
 | ------------------------------- | ------------------------ | ------------------------------------------------------------------- |
 | /                               | Public                   | Foundation status initially; product entry later                    |

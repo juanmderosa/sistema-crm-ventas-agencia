@@ -39,6 +39,46 @@ export type Database = {
         };
         Relationships: [];
       };
+      audit_events: {
+        Row: {
+          action: string;
+          actor_id: string;
+          agency_id: string;
+          created_at: string;
+          id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          action: string;
+          actor_id: string;
+          agency_id: string;
+          created_at?: string;
+          id?: string;
+        };
+        Update: {
+          action?: string;
+          actor_id?: string;
+          agency_id?: string;
+          created_at?: string;
+          id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "audit_events_actor_id_fkey";
+            columns: ["actor_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "audit_events_agency_id_fkey";
+            columns: ["agency_id"];
+            isOneToOne: false;
+            referencedRelation: "agencies";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       memberships: {
         Row: {
           agency_id: string;
@@ -133,7 +173,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      create_agency: {
+        Args: { p_ars_per_usd: string; p_name: string; p_slug: string };
+        Returns: string;
+      };
     };
     Enums: {
       [_ in never]: never;
