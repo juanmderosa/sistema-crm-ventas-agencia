@@ -46,6 +46,9 @@ export default async function AgenciesPage({
           {agencies.map((agency) => (
             <li key={agency.id}>
               <h2>{agency.name}</h2>
+              <a href={`/plataforma/agencias/${agency.id}/superadministrador`}>
+                Superadministrador
+              </a>
               <dl className="access-details">
                 <div>
                   <dt>Identificador</dt>

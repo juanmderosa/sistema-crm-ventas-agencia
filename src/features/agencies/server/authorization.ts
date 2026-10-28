@@ -6,7 +6,9 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 export async function getPlatformAgencyAccess() {
   const user = await getCurrentUser();
   if (!user) return null;
+
   const client = await createSupabaseServerClient();
   if (!(await getActivePlatformAdminForUser(client, user.id))) return null;
+
   return { user, client };
 }

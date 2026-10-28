@@ -18,6 +18,10 @@ Migration `20261027010000_platform_agency_creation.sql` adds `audit_events` with
 
 The authenticated RPC `create_agency(text,text,text)` checks and locks the caller's active platform assignment, validates canonical slug/name/exact decimal rate, and creates an active agency plus its audit event in one transaction. It cannot accept a client-selected actor or assign memberships. No broader write permissions were added to existing tables. Database types are regenerated from the migrated local instance. The read-only foundation descriptions above describe the original migration; this RPC is the new, narrowly scoped mutation boundary.
 
+## Initial owner assignment
+
+Migration `20261028000000_initial_agency_superadmin.sql` extends audit_events with nullable target_user_id (profile FK with restricted deletion). agency.created requires null; membership.superadmin_assigned requires a target. The latter records the assigned user independently of the actor. The new authenticated RPC validates platform authority and existing target profile, locks the agency, and atomically inserts membership plus event. It does not alter prior memberships or allow replacing active/inactive owner history. No change to the membership table's general role cardinality or legacy data is required; competing calls through this initial-assignment API are serialized per agency.
+
 ## Planned product entities
 
 | Entity              | Key relationships and invariants                                                                                                       |
