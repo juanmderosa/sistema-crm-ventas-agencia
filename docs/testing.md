@@ -57,6 +57,14 @@ The recovery suite sends actual recovery mail through local Auth and reads the u
 
 Real one-hour expiry is a separate manual check in [the recovery guide](manual-password-recovery.md); the automated suite does not wait an hour or claim that an altered/reused token proves time-based expiry. Remote SMTP, deployment configuration and real mailbox delivery are not certified by local Mailpit tests. No database fixture SQL is needed for the manual recovery flow when an Auth test account already exists.
 
+### Platform agency creation
+
+`supabase/tests/agency_creation.test.sql` adds thirty real PostgreSQL assertions: anonymous/missing/forged identity denial; denied agency roles; active/revoked platform behavior; exact decimal storage; duplicate-slug rejection; client audit mutation denial; audit visibility; and full rollback when a synthetic audit trigger rejects the event. The original 105 authorization assertions remain unchanged. Fixtures and the rejecting trigger roll back with the suite.
+
+`agency-creation.spec.ts` provisions unique local Auth identities and a temporary platform assignment. It verifies shared input focus and field errors, actual UI creation, exact decimal persistence and actor audit, duplicate feedback, action denial after live revocation, anonymous/ordinary route and RPC denial, simultaneous public-key RPC calls with exactly one successful creation/event, pagination and malformed/duplicate page selectors. The service-role client prepares/checks/removes synthetic fixtures only; application and concurrent RPC calls use public credentials and user sessions. Cleanup targets exact generated slugs and the fixture actor's events, then removes its assignment before shared identity teardown. No customer data, reset or global cleanup.
+
+See [manual platform creation](manual-agency-creation.md) for bootstrap SQL, permission checks and narrowly scoped cleanup preserving Auth users/profiles. A real platform actor is required before the first UI creation. Creation does not assign an agency superadmin or test invitation flows. HTTP `ERR_NETWORK_IO_SUSPENDED` during a local run invalidates that run; repeat after connectivity resumes without increasing application/test timeouts.
+
 ### Full product fixtures
 
 Two agencies, each with superadmin/admin/two sellers, one inactive seller, and draft/published/reserved/sold vehicles. Distinct inquiries and private photos. A platform superadmin has an independent platform role. Test anonymous, each authenticated role and users without membership.

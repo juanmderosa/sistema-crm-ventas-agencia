@@ -61,6 +61,14 @@ GET renders the form without consuming the token. The Server Action validates th
 
 The local template and Auth configuration must be applied separately to a hosted project before deployment. See [manual recovery checks](manual-password-recovery.md) and [Supabase email templates](https://supabase.com/docs/guides/auth/auth-email-templates).
 
+### Platform agency creation
+
+`/plataforma/agencias` lists active and inactive agencies in pages of twenty, ordered by creation timestamp and UUID. `/plataforma/agencias/nueva` provides the shared RHF/Zod creation form. Server pages and actions verify a live platform assignment; an agency role never grants platform administration. The application uses request-scoped public-key clients under RLS. Queries and RPC calls are centralized in the agencies feature adapter. Pages render fresh server data and creation navigates to a new document; no client remote list state or QueryClient is introduced.
+
+Migration `20261027010000_platform_agency_creation.sql` adds only the restricted `create_agency` function and minimal `audit_events` for `agency.created`. The SECURITY DEFINER function has an empty search_path, explicit grants and an authoritative platform check locked until transaction commit. It derives the actor from auth.uid(), accepts no owner/role/active-state arguments, validates inputs again and inserts agency plus audit atomically. Direct table writes remain forbidden. Audit reads require active platform access; application clients cannot insert, alter or delete events. Actor and agency foreign keys restrict deletion.
+
+ARS/USD input remains decimal text through validation and RPC and is cast to PostgreSQL numeric only after rejecting excess size/precision, exponents, nonfinite values and nonpositive rates. List reads cast numeric to text, preserving precision without JavaScript floating-point conversion. A unique canonical slug rejects simultaneous duplicate creation. New agencies are active with no memberships; owner assignment, invitations, editing/deactivation and rate-change history are separate increments. The first platform assignment remains an explicit local bootstrap, not a public self-promotion endpoint.
+
 ### Product rules
 
 - Vehicle publication (draft/published) is separate from availability (available/reserved/sold).

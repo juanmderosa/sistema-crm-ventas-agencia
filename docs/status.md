@@ -1,5 +1,19 @@
 # Estado de entrega
 
+## Plataforma — incremento 1: alta auditada de agencias (2026-10-27)
+
+En `codex/platform-agency-creation`, creada por el usuario desde `develop`: `/plataforma` enlaza a `/plataforma/agencias`, listado paginado de agencias activas e inactivas, y `/plataforma/agencias/nueva` permite crear nombre, slug y cotización ARS/USD mediante Form/Input compartidos, RHF/Zod y handlers nombrados. La agencia se crea activa, sin usuarios asignados. No se agregaron controles de edición, desactivación, invitación ni asignación de responsables.
+
+Migración `20261027010000_platform_agency_creation.sql` aplicada únicamente a Supabase local, sin reset: RPC con autorización de plataforma vigente bloqueada durante la transacción, validación SQL independiente y alta atómica de agencia + evento `agency.created` con actor derivado de auth.uid(). Auditoría de lectura exclusiva de plataforma; sin escrituras directas de clientes ni privilegios administrativos en la aplicación. Roles de agencia y metadata no autorizan altas. La cotización se conserva como texto decimal hasta PostgreSQL, con hasta doce enteros/seis decimales, sin redondeo de JavaScript. Tipos regenerados desde la instancia migrada; consultas/RPC en el adaptador de datos separado.
+
+Pruebas primero: fallaron el esquema Zod y las pruebas de la función/tabla ausentes antes de implementar. Verificación final aprobada: formato, lint, TypeScript, 13 pruebas unitarias, 8 del selector CI, 135 comprobaciones pgTAP (105 previas + 30 nuevas), comparación de tipos y build Next.js. pgTAP prueba también rollback completo si falla auditoría. Pasaron los 42 E2E completos con dos workers y los seis casos nuevos contra Worker local: formulario, persistencia exacta, autor, duplicados, roles denegados, revocación con formulario abierto, llamadas simultáneas con un único resultado/evento, paginación y selectores inválidos. Capturas de escritorio/celular revisadas sin desbordamiento.
+
+Una corrida anterior se invalidó por suspensión de la red del equipo (`ERR_NETWORK_IO_SUSPENDED` y timeouts de teardown); se repitió sin ampliar tiempos ni quitar casos. Se retiraron por sus cinco IDs exactos los usuarios/perfiles sintéticos que quedaron de esa interrupción, tras verificar que ya no tenían relaciones pendientes. No se tocaron las cuentas manuales de QA ni se hizo limpieza global. Los fixtures de las corridas finales se retiraron en sus teardowns.
+
+OpenNext y Wrangler dry-run aprobados: 7324.01 KiB / gzip 1497.43 KiB. Worker de prueba detenido al terminar. Se mantienen las advertencias sobre Windows y soporte experimental de Node.js Proxy; la verificación local no certifica despliegue ni producción. GitHub Actions remoto sigue pendiente. Sin dependencias nuevas, cambios de lockfile, despliegues u operaciones de escritura Git. Se normalizaron finales de línea para Prettier sin cambios de contenido ajenos y se retiró el cambio automático de `next-env.d.ts`.
+
+La [guía manual de alta](manual-agency-creation.md) incluye SQL de preparación y limpieza acotada, conservando usuarios Auth/perfiles y evitando alterar asignaciones preexistentes. Próximo paso: prueba manual y commit del usuario; luego asignación del superadministrador de agencia en otro incremento. La gestión e invitación de administradores/vendedores permanece pendiente.
+
 ## Corrección — formularios bloqueados en desarrollo (2026-10-27)
 
 Reproducido en el servidor de desarrollo real: `localhost:3000` hidrataba correctamente, pero `127.0.0.1:3000` rechazaba la conexión WebSocket de HMR. React no terminaba de hidratar y el fieldset compartido permanecía deshabilitado. Se agregó únicamente `127.0.0.1` a `allowedDevOrigins` en `next.config.ts`; se conserva la protección de hidratación y no se amplía la lista a dominios arbitrarios. Los E2E previos usaban `next start`, por eso no cubrían este bloqueo exclusivo de `next dev`.
