@@ -22,6 +22,12 @@ The authenticated RPC `create_agency(text,text,text)` checks and locks the calle
 
 Migration `20261028000000_initial_agency_superadmin.sql` extends audit_events with nullable target_user_id (profile FK with restricted deletion). agency.created requires null; membership.superadmin_assigned requires a target. The latter records the assigned user independently of the actor. The new authenticated RPC validates platform authority and existing target profile, locks the agency, and atomically inserts membership plus event. It does not alter prior memberships or allow replacing active/inactive owner history. No change to the membership table's general role cardinality or legacy data is required; competing calls through this initial-assignment API are serialized per agency.
 
+## Invitation lifecycle
+
+Migrations `20261028010000_superadmin_invitations.sql` and `20261028010100_existing_invitation_profiles.sql` add agency_invitations with agency/author references, normalized email/name, optional bound profile, lifecycle state, expiry and acceptance timestamp. Active platform users read the records; bound recipients read their own. Clients have no mutation grants. audit_events gains an invitation FK and sent/accepted/cancelled actions; all existing audit variants remain valid. Deletions are restricted, preserving references rather than cascading through identities.
+
+Guarded RPCs reserve, cancel and accept invitations under an agency lock. Delivery binding and confirmed existing-account profile preparation are service-only operations used by the administrative Edge adapter. Public acceptance checks the stored user ID, current verified Auth email and configured password; it does not accept actor/role/agency ownership from the recipient. Identity/authority/expiry/state are rechecked on every attempt. A sent invitation grants no membership; acceptance inserts membership/audit and consumes the invitation in one transaction. Existing-profile assignment now blocks pending reservations and unconfirmed targets; its previous SQL fixture identities were marked confirmed to preserve their intended eligible state, without removing prior assertions.
+
 ## Planned product entities
 
 | Entity              | Key relationships and invariants                                                                                                       |

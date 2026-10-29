@@ -6,6 +6,10 @@ export default defineConfig([
   ...nextVitals,
   ...nextTypescript,
   {
+    files: ["supabase/functions/**/*.ts"],
+    languageOptions: { globals: { Deno: "readonly" } },
+  },
+  {
     rules: {
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/ban-ts-comment": "error",

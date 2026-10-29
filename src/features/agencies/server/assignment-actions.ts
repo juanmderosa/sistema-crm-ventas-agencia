@@ -25,7 +25,7 @@ export async function assignAgencySuperadmin(
     P0001:
       "La agencia ya tiene una asignación de superadministrador. No se modificó.",
     P0002:
-      "La agencia está inactiva, no existe o el usuario no tiene un perfil disponible.",
+      "La agencia está inactiva, no existe o el usuario no tiene un perfil con correo confirmado.",
     "23505": "El usuario ya pertenece a esta agencia. Su rol no se modificó.",
   };
 

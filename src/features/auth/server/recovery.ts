@@ -1,18 +1,10 @@
 import "server-only";
-import { createClient } from "@supabase/supabase-js";
-import { getSupabaseConfig } from "@/lib/supabase/config";
+import { createEphemeralAuthClient } from "@/lib/supabase/ephemeral";
 import { recoveryOriginSchema } from "../schemas";
 
 // No cookies or browser storage: a recovery token cannot install a panel session.
 export function createRecoveryClient() {
-  const { url, key } = getSupabaseConfig();
-  return createClient(url, key, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-      detectSessionInUrl: false,
-    },
-  });
+  return createEphemeralAuthClient();
 }
 
 export function getRecoveryRedirect() {

@@ -77,6 +77,28 @@ Migration `20261028000000_initial_agency_superadmin.sql` adds the restricted `as
 
 This increment handles existing profiles only; creating Auth accounts, invitations, replacing owners, reactivation and managing other roles remain separate work. Profiles without email are still identifiable by UUID; the application does not query auth.users or use a privileged key to discover addresses. Bootstrap/manual SQL preserves existing Auth identities/profiles.
 
+### Superadministrator invitations
+
+Platform can invite a new account through `/plataforma/agencias/[agencyId]/invitar`; `/invitaciones/aceptar` verifies the email proof, sets a password, and redeems the stored invitation. Administrative Auth calls live only in `supabase/functions/invite-agency-superadmin`. The Edge Function verifies the bearer token with Auth and reserves the slot through a user-scoped RPC before allocating its request-scoped administrative client. Gateway JWT verification is disabled specifically because the handler performs its own authenticated verification; this is not an anonymous provisioning endpoint. No service-role key is configured in Next.js or sent to the browser. The function uses a separately configured trusted APP_ORIGIN, never a client redirect or Host header.
+
+The persistent invitation is authoritative for agency, inviter, normalized email, bound Auth identity and expiry. `begin_superadmin_invitation` locks the platform assignment/agency and reserves one live initial slot; the existing-profile assignment also respects that reservation and now requires confirmed email. The service-only delivery callback validates the invited Auth identity, creates its profile without overwriting existing names, records invitation.sent, and marks sent. A request by an ordinary authenticated caller cannot bind identities or claim delivery. The service-only existing-account adapter prepares a missing profile for a confirmed Auth account but neither changes passwords nor grants membership; the sender must use the explicit existing-user assignment instead. Failed delivery never activates a role.
+
+| Stored state | Meaning                                                                  | Membership from this invitation |
+| ------------ | ------------------------------------------------------------------------ | ------------------------------- |
+| sending      | Reservation created; delivery not yet confirmed                          | None                            |
+| sent         | Auth reported delivery and identity binding was saved                    | None until acceptance           |
+| failed       | Provider rejected the attempt, including an already registered account   | None                            |
+| cancelled    | Platform explicitly invalidated the reservation                          | None                            |
+| accepted     | Identity, password, authority and expiry verified; transaction committed | Active agency_superadmin        |
+
+Expiry is derived from expires_at for pending rows, without rewriting history. It limits redemption, not the lifetime of an accepted membership. There is no automatic owner replacement or role promotion. Every mutation locks platform → agency → invitation consistently. Acceptance derives the recipient from auth.uid(), checks current confirmed email/password against auth.users and the bound identity, revalidates inviter/agency activity and creates the membership plus audit/state atomically. The private mutation core has no client execution grants. Sent/accepted/cancelled events reference the invitation and preserve author/recipient separately. Existing inactive owner history continues to block a new initial owner.
+
+Auth/email and PostgreSQL cannot share a transaction. Transport/server uncertainty stays sending, with explicit review/cancellation; a definite provider rejection becomes failed. Password activation can succeed before a rejected membership transaction. In that case the correct user can log in and redeem a still-valid sent invitation without reusing the consumed token; other users cannot resume it. A verified link whose password update failed uses password recovery before authenticated resumption. Confirmed existing accounts are never reset through the invitation API. A cancelled unconfirmed account can receive a fresh invitation; the previous record remains invalid. Accounts/profiles are not silently deleted as compensation.
+
+Public-key ephemeral Auth clients are shared infrastructure for recovery and invitation verification, created per operation without cookies or persisted tokens. Successful first acceptance closes that temporary session and the current browser session, then returns to login. Authenticated resumption navigates to a fresh panel document. Forms use RHF/Zod and shared inputs; status lists remain fresh Server Component reads. Token pages are dynamic, private/no-store, no-referrer and not indexed; GET does not consume email tokens.
+
+The function pins its SDK/Zod versions in deno.json and its generated deno.lock; Deno 2.9.6 is a justified development-only dependency for official runtime type checking with --frozen. The root lockfile records that tool; application SDK versions and the OpenNext override remain unchanged. `npm run functions:serve` supplies only the public origin in a temporary file; Supabase owns administrative runtime credentials. CI starts the local function before real mail E2E. Hosted deployment, SMTP, template Invite and the Edge Function origin are separate acceptance gates.
+
 ### Product rules
 
 - Vehicle publication (draft/published) is separate from availability (available/reserved/sold).

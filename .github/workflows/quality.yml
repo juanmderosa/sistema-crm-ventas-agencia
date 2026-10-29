@@ -62,6 +62,10 @@ jobs:
       - name: Install Chromium and system dependencies
         if: steps.changes.outputs.docs_only != 'true'
         run: npx playwright install --with-deps chromium
+      - name: Start local invitation function
+        if: steps.changes.outputs.docs_only != 'true'
+        shell: bash
+        run: npm run functions:serve -- --e2e > "$RUNNER_TEMP/invitation-function.log" 2>&1 &
       - name: Run browser tests
         if: steps.changes.outputs.docs_only != 'true'
         run: npm run test:e2e
