@@ -9,6 +9,7 @@ import {
 } from "@/features/agencies/server/assignment-queries";
 import { AssignSuperadminForm } from "@/features/agencies/components/assign-superadmin-form";
 import { agencyPageSchema } from "@/features/agencies/schemas";
+import { listAgencyInvitations } from "@/features/invitations/server/queries";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Superadministrador · Agencia" };
@@ -45,8 +46,10 @@ export default async function AgencySuperadminPage({
       </AccessShell>
     );
 
+  const invitations = await listAgencyInvitations(access.client, id.data);
+  const pending = invitations.some((row) => row.isPending);
   const choices =
-    agency.is_active && owners.length === 0
+    agency.is_active && owners.length === 0 && !pending
       ? await listAssignmentProfiles(access.client, page.data)
       : null;
 
@@ -70,6 +73,11 @@ export default async function AgencySuperadminPage({
             ))}
           </ul>
         </>
+      ) : pending ? (
+        <p role="status">
+          Hay una invitación pendiente. Revisala antes de asignar un usuario
+          existente.
+        </p>
       ) : !agency.is_active ? (
         <p role="status">
           La agencia está inactiva. No se puede asignar un responsable.
@@ -103,6 +111,9 @@ export default async function AgencySuperadminPage({
         )
       )}
       <nav className="agency-actions">
+        <a href={`/plataforma/agencias/${id.data}/invitar`}>
+          Invitaciones por correo
+        </a>
         <a href="/plataforma/agencias">Volver a agencias</a>
       </nav>
     </AccessShell>

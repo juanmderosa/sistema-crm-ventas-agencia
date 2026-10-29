@@ -39,6 +39,68 @@ export type Database = {
         };
         Relationships: [];
       };
+      agency_invitations: {
+        Row: {
+          accepted_at: string | null;
+          agency_id: string;
+          created_at: string;
+          display_name: string;
+          email: string;
+          expires_at: string;
+          id: string;
+          invited_by: string;
+          status: string;
+          user_id: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          accepted_at?: string | null;
+          agency_id: string;
+          created_at?: string;
+          display_name: string;
+          email: string;
+          expires_at?: string;
+          id?: string;
+          invited_by: string;
+          status?: string;
+          user_id?: string | null;
+        };
+        Update: {
+          accepted_at?: string | null;
+          agency_id?: string;
+          created_at?: string;
+          display_name?: string;
+          email?: string;
+          expires_at?: string;
+          id?: string;
+          invited_by?: string;
+          status?: string;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "agency_invitations_agency_id_fkey";
+            columns: ["agency_id"];
+            isOneToOne: false;
+            referencedRelation: "agencies";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "agency_invitations_invited_by_fkey";
+            columns: ["invited_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "agency_invitations_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       audit_events: {
         Row: {
           action: string;
@@ -46,6 +108,7 @@ export type Database = {
           agency_id: string;
           created_at: string;
           id: string;
+          invitation_id: string | null;
           target_user_id: string | null;
         };
         ComputedFields: never;
@@ -55,6 +118,7 @@ export type Database = {
           agency_id: string;
           created_at?: string;
           id?: string;
+          invitation_id?: string | null;
           target_user_id?: string | null;
         };
         Update: {
@@ -63,6 +127,7 @@ export type Database = {
           agency_id?: string;
           created_at?: string;
           id?: string;
+          invitation_id?: string | null;
           target_user_id?: string | null;
         };
         Relationships: [
@@ -78,6 +143,13 @@ export type Database = {
             columns: ["agency_id"];
             isOneToOne: false;
             referencedRelation: "agencies";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "audit_events_invitation_id_fkey";
+            columns: ["invitation_id"];
+            isOneToOne: false;
+            referencedRelation: "agency_invitations";
             referencedColumns: ["id"];
           },
           {
@@ -183,12 +255,36 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      accept_superadmin_invitation: {
+        Args: { p_invitation_id: string };
+        Returns: string;
+      };
       assign_initial_agency_superadmin: {
         Args: { p_agency_id: string; p_user_id: string };
         Returns: string;
       };
+      begin_superadmin_invitation: {
+        Args: { p_agency_id: string; p_display_name: string; p_email: string };
+        Returns: string;
+      };
+      cancel_superadmin_invitation: {
+        Args: { p_invitation_id: string };
+        Returns: undefined;
+      };
       create_agency: {
         Args: { p_ars_per_usd: string; p_name: string; p_slug: string };
+        Returns: string;
+      };
+      finish_superadmin_invitation: {
+        Args: {
+          p_delivered: boolean;
+          p_invitation_id: string;
+          p_user_id: string;
+        };
+        Returns: undefined;
+      };
+      prepare_existing_invitation_profile: {
+        Args: { p_invitation_id: string };
         Returns: string;
       };
     };

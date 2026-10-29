@@ -54,6 +54,7 @@ export const config = {
   matcher: [
     "/login",
     "/recuperar/:path*",
+    "/invitaciones/:path*",
     "/cuenta/:path*",
     "/panel/:path*",
     "/plataforma/:path*",

@@ -18,7 +18,7 @@
     "test:watch": "vitest",
     "test:e2e": "node scripts/e2e.mjs",
     "test:e2e:worker": "node scripts/e2e.mjs --worker",
-    "check": "npm run format:check && npm run lint && npm run typecheck && npm test",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm run functions:typecheck && npm test",
     "cf:build": "opennextjs-cloudflare build",
     "cf:preview": "opennextjs-cloudflare preview",
     "cf:dry-run": "wrangler deploy --dry-run",
@@ -27,7 +27,10 @@
     "db:test": "supabase test db",
     "db:migrate": "supabase migration up --local",
     "db:types": "node scripts/database-types.mjs",
-    "db:types:check": "node scripts/database-types.mjs --check"
+    "db:types:check": "node scripts/database-types.mjs --check",
+    "functions:typecheck": "deno check --frozen --config supabase/functions/invite-agency-superadmin/deno.json supabase/functions/invite-agency-superadmin/index.ts",
+    "functions:serve": "node scripts/functions-serve.mjs",
+    "functions:lock": "deno cache --config supabase/functions/invite-agency-superadmin/deno.json supabase/functions/invite-agency-superadmin/index.ts"
   },
   "overrides": {
     "@node-minify/core": {
@@ -55,6 +58,7 @@
     "@types/node": "26.6.5",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
+    "deno": "2.9.6",
     "eslint": "9.39.5",
     "eslint-config-next": "16.4.3",
     "prettier": "3.9.10",

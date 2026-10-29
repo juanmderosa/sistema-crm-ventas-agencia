@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 select plan(22);
-insert into auth.users(id) values ('d3300000-0000-4000-8000-000000000001'), ('d3300000-0000-4000-8000-000000000002'), ('d3300000-0000-4000-8000-000000000003');
+insert into auth.users(id,email_confirmed_at) values ('d3300000-0000-4000-8000-000000000001',now()), ('d3300000-0000-4000-8000-000000000002',now()), ('d3300000-0000-4000-8000-000000000003',now());
 insert into public.profiles(id,display_name) select id,'QA asignación' from auth.users where id in ('d3300000-0000-4000-8000-000000000001','d3300000-0000-4000-8000-000000000002','d3300000-0000-4000-8000-000000000003');
 insert into public.platform_admins(user_id) values ('d3300000-0000-4000-8000-000000000001');
 insert into public.agencies(id,name,slug,ars_per_usd,is_active) values
