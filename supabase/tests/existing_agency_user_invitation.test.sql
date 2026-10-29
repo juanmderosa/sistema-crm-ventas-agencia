@@ -1,0 +1,10 @@
+begin;
+create extension if not exists pgtap with schema extensions;
+select plan(3);
+set local role authenticated;
+select throws_ok($$select public.prepare_existing_agency_user_invitation('ea100000-0000-4000-8000-000000000001')$$,'42501',null,'Authenticated caller cannot resolve Auth identities');
+reset role;
+select throws_ok($$select public.prepare_existing_agency_user_invitation('ea100000-0000-4000-8000-000000000001')$$,'P0002',null,'Missing reservation is rejected');
+select ok(not has_function_privilege('anon','public.prepare_existing_agency_user_invitation(uuid)','execute'),'Anonymous cannot resolve Auth identities');
+select * from finish();
+rollback;

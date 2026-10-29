@@ -13,9 +13,11 @@ import { acceptInvitationWithPassword } from "../server/actions";
 export function AcceptInvitationForm({
   invitationId,
   token,
+  kind = "superadmin",
 }: {
   invitationId: string;
   token: string;
+  kind?: "superadmin" | "agency-user";
 }) {
   const [error, setError] = useState<string>();
   const {
@@ -33,6 +35,7 @@ export function AcceptInvitationForm({
         ...values,
         invitationId,
         token,
+        kind,
       });
       if (!result.ok) {
         setError(result.error);
