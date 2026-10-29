@@ -51,14 +51,7 @@ if (!parsed.success) {
   );
   const child = spawn(
     process.execPath,
-    [
-      cli,
-      "functions",
-      "serve",
-      "invite-agency-superadmin",
-      "--env-file",
-      envFile,
-    ],
+    [cli, "functions", "serve", "--env-file", envFile],
     { stdio: ["ignore", "pipe", "pipe"] },
   );
   let ready = false;

@@ -28,9 +28,7 @@ export default async function LoginPage({
         </p>
         <LoginForm />
         {(await searchParams).invited === "1" && (
-          <p role="status">
-            Invitación aceptada. Ingresá con tu nueva contraseña.
-          </p>
+          <p role="status">Invitación aceptada. Ingresá con tu cuenta.</p>
         )}
         {(await searchParams).recovered === "1" && (
           <p role="status">

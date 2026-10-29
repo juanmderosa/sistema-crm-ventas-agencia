@@ -25,12 +25,13 @@
     "db:start": "supabase start",
     "db:stop": "supabase stop",
     "db:test": "supabase test db",
+    "db:test:user-invitation-concurrency": "node scripts/test-user-invitation-concurrency.mjs",
     "db:migrate": "supabase migration up --local",
     "db:types": "node scripts/database-types.mjs",
     "db:types:check": "node scripts/database-types.mjs --check",
-    "functions:typecheck": "deno check --frozen --config supabase/functions/invite-agency-superadmin/deno.json supabase/functions/invite-agency-superadmin/index.ts",
+    "functions:typecheck": "deno check --frozen --config supabase/functions/invite-agency-superadmin/deno.json supabase/functions/invite-agency-superadmin/index.ts && deno check --frozen --config supabase/functions/invite-agency-user/deno.json supabase/functions/invite-agency-user/index.ts",
     "functions:serve": "node scripts/functions-serve.mjs",
-    "functions:lock": "deno cache --config supabase/functions/invite-agency-superadmin/deno.json supabase/functions/invite-agency-superadmin/index.ts"
+    "functions:lock": "deno cache --config supabase/functions/invite-agency-superadmin/deno.json supabase/functions/invite-agency-superadmin/index.ts && deno cache --config supabase/functions/invite-agency-user/deno.json supabase/functions/invite-agency-user/index.ts"
   },
   "overrides": {
     "@node-minify/core": {

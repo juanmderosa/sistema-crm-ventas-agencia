@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/features/auth/server/session";
 import { logout } from "@/features/auth/server/actions";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createEphemeralAuthClient } from "@/lib/supabase/ephemeral";
+import { acceptAgencyUserInvitation } from "@/features/user-invitations/server/queries";
 import { inviteSuperadminSchema, acceptInvitationSchema } from "../schemas";
 import {
   sendSuperadminInvitation,
@@ -68,7 +69,9 @@ export async function acceptInvitationWithPassword(input: unknown) {
           error:
             "No se pudo definir la contraseña. Usá Recuperar contraseña y después ingresá para completar la aceptación desde este enlace.",
         }
-      : await acceptSuperadminInvitation(client, parsed.data.invitationId);
+      : parsed.data.kind === "agency-user"
+        ? await acceptAgencyUserInvitation(client, parsed.data.invitationId)
+        : await acceptSuperadminInvitation(client, parsed.data.invitationId);
   } finally {
     const signedOut = await client.auth.signOut({ scope: "local" });
     if (signedOut.error)

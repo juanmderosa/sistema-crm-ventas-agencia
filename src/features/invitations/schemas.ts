@@ -17,6 +17,7 @@ export const inviteSuperadminSchema = z.object({
 });
 export type InviteSuperadminInput = z.infer<typeof inviteSuperadminSchema>;
 export const acceptInvitationSchema = recoveryPasswordSchema.safeExtend({
+  kind: z.enum(["superadmin", "agency-user"]).default("superadmin"),
   invitationId: z.uuid(),
   token: recoveryTokenSchema,
 });

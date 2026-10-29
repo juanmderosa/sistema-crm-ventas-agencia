@@ -29,32 +29,38 @@ try {
       ),
     );
   preparation = `la Edge Function local: npm run functions:serve -- ${worker ? "--worker" : "--e2e"}`;
-  let functionReady = false;
-  for (let attempt = 0; attempt < 120; attempt++) {
-    try {
-      const response = await fetch(
-        `${status.API_URL}/functions/v1/invite-agency-superadmin`,
-        { method: "POST", body: "{}", signal: AbortSignal.timeout(3000) },
-      );
-      const body = await response.json();
-      if (
-        response.status === 401 &&
-        z
-          .object({
-            ok: z.literal(false),
-            error: z.literal("Ingresá nuevamente."),
-          })
-          .safeParse(body).success
-      ) {
-        functionReady = true;
-        break;
+  for (const functionName of [
+    "invite-agency-superadmin",
+    "invite-agency-user",
+  ]) {
+    let functionReady = false;
+    for (let attempt = 0; attempt < 120; attempt++) {
+      try {
+        const response = await fetch(
+          `${status.API_URL}/functions/v1/${functionName}`,
+          { method: "POST", body: "{}", signal: AbortSignal.timeout(3000) },
+        );
+        const body = await response.json();
+        if (
+          response.status === 401 &&
+          z
+            .object({
+              ok: z.literal(false),
+              error: z.literal("Ingresá nuevamente."),
+            })
+            .safeParse(body).success
+        ) {
+          functionReady = true;
+          break;
+        }
+      } catch {
+        /* The local runtime can still be downloading its pinned dependencies. */
       }
-    } catch {
-      /* The local runtime can still be downloading its pinned dependencies. */
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    if (!functionReady)
+      throw new Error("Local invitation function unavailable");
   }
-  if (!functionReady) throw new Error("Local invitation function unavailable");
   const result = spawnSync(
     process.execPath,
     [

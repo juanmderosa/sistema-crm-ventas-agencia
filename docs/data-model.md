@@ -1,5 +1,11 @@
 # Data model
 
+## Agency user invitation contract (2026-10-29)
+
+`agency_user_invitations` implements the employee invitation lifecycle separately from the platform's initial-owner `agency_invitations`. It stores agency/inviter/profile foreign keys, normalized email, display name, fixed admin/seller role, bound recipient, sending/sent/failed/accepted/cancelled state and timestamps (one-hour default expiry). Accepted requires accepted_at; sent/accepted require a bound recipient. The agency/id unique pair supports the audit composite foreign key, preventing cross-agency invitation attribution. Indexes cover agency/date, inviter and recipient.
+
+`audit_events.user_invitation_id` references that pair. New actions user_invitation.sent, user_invitation.cancelled, membership.user_invited and user_invitation.accepted cannot refer to the initial-owner invitation column. Existing actions remain compatible and cannot refer to employee invitations. Audit writes remain guarded, with platform-only reads. RLS and RPC authorization differ from initial-owner provisioning: current agency superadmin can manage admin/seller invitations, admin only seller invitations, and each bound recipient can read its own record. No employee email/UI path is implemented in this database increment. See architecture/testing for mutation, locking and acceptance rules.
+
 The table below remains the design baseline for the complete product. Migration `20261027000000_agencies_roles.sql` implements only agencies, profiles, memberships and platform_admins, verified on local Supabase. Types for the public schema are generated from migrated local Supabase in `src/lib/supabase/database.types.ts`; CI checks for drift. They describe database structure, not permission to execute writes.
 
 ## Implemented authorization foundation

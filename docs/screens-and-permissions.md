@@ -19,7 +19,7 @@ Implemented authentication/access: `/login` accepts existing email/password acco
 | /panel/usuarios                 | Agency management        | Permitted role creation, assignment and activation                  |
 | /plataforma                     | Platform superadmin      | Agency creation, owner assignment, global metrics                   |
 
-Planned routes are not implemented placeholders and must not be represented as working.
+Planned routes are not implemented placeholders and must not be represented as working. `/panel/usuarios?agency=<uuid>` now implements agency admin/seller invitations, paginated status and cancellation; `/invitaciones/usuarios/aceptar` handles new and existing accounts. Platform access by itself does not authorize agency user management; an explicit active agency management membership is required. Changing roles/deactivating members remains pending.
 
 ## Permission matrix
 

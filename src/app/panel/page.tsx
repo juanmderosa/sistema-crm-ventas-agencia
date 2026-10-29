@@ -77,6 +77,13 @@ export default async function PanelPage({
           {context.memberships.length > 1 && (
             <a href="/panel">Cambiar de agencia</a>
           )}
+          {["agency_superadmin", "admin"].includes(access.membership.role) && (
+            <nav className="agency-actions">
+              <a href={`/panel/usuarios?agency=${access.membership.agency.id}`}>
+                Administrar invitaciones de usuarios
+              </a>
+            </nav>
+          )}
         </>
       )}
       {access.kind !== "agency" && (

@@ -83,6 +83,20 @@ Start `npm run functions:serve -- --e2e` in a separate terminal before Next E2E,
 
 The complete invitation Worker suite was verified with `--workers=1`: a two-worker run left one desktop login/navigation pending beyond the unchanged five-second assertion window; its trace recorded a delayed HTTP 200 login response, while the other nine cases passed. All ten passed serially, retaining the explicit parallel sender/acceptor API calls. This bounds functional local verification, not production latency or load capacity. Other Worker suites retain their existing default concurrency.
 
+### Agency user invitations — database increment
+
+`agency_user_invitations.test.sql` adds 52 pgTAP assertions (239 total). They first failed against the absent RPC/table, then passed on the migrated real local PostgreSQL. They cover the role matrix, foreign agencies, forged metadata, platform-only denial, RLS, service-only binding, direct-write/private-helper denial, cancelled/expired states, author demotion/revocation, inactive agencies, recipient/email/password checks, independent multiagency roles, preserved inactive memberships/profiles, and atomic rollback on audit failure. Synthetic rows and the failure trigger live in a transaction ending in ROLLBACK; no manual account setup is needed.
+
+`npm run db:test:user-invitation-concurrency` uses two independent psql connections through the local Docker container selected by supabase/config.toml. Simultaneous authorized senders produce one live reservation; simultaneous acceptances produce one active membership and exactly three invitation-linked audit events. It validates business-conflict errors, uses random synthetic UUIDs/emails, and cleans only those UUIDs in finally. SQL password markers isolate database checks; they do not certify real password login or mail proof. CI runs this command after migrations/pgTAP/types. Remote CI still requires an actual run.
+
+For local verification, run `npm run db:migrate`, `npm run db:test`, `npm run db:test:user-invitation-concurrency` and `npm run db:types:check` with Docker/Supabase running. Neither test command requires manual SQL fixtures. Application email/screens are intentionally absent in this increment; existing invitation E2E remains regression coverage for the initial-owner workflow. Employee Auth/Edge/Mailpit/E2E and Worker checks are described in the application increment below.
+
+### Agency user invitations — application increment
+
+The application increment adds unit validation of target roles/agency selectors and a service-only existing-identity adapter SQL suite. Browser cases exercise real local Edge/Auth/Mailpit: cross-browser new-account acceptance, no early access, fixed admin role, admin-only-seller controls and direct RPC/Edge denial, ordinary/foreign/platform-only denial, cancellation and invalidated acceptance, existing account password/profile/other-agency preservation, revoked-author interruption and correct-user session resumption, and URL pagination/invalid selectors. The initial browser run exposed a test navigation race; this suite now waits for the login's panel/platform navigation before issuing another navigation, retaining existing timeouts.
+
+Start `npm run functions:serve -- --e2e` for Next or `--worker` for local Worker. The helper now serves both functions, each with its explicit bearer validation; the browser preflight checks both. Manual commands and SQL setup/verification/scoped cleanup are in [agency user invitations](manual-agency-user-invitations.md). The setup preserves all prior Auth/profiles and existing agency assignments; it is not executed as part of implementation. Actual email proof is certified by browser tests rather than SQL password markers. Auth's full one-hour clock and hosted SMTP/Edge/CI remain separate checks.
+
 ### Full product fixtures
 
 Two agencies, each with superadmin/admin/two sellers, one inactive seller, and draft/published/reserved/sold vehicles. Distinct inquiries and private photos. A platform superadmin has an independent platform role. Test anonymous, each authenticated role and users without membership.

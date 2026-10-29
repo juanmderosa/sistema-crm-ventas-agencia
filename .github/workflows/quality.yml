@@ -56,6 +56,9 @@ jobs:
       - name: Verify generated database types
         if: steps.changes.outputs.docs_only != 'true'
         run: npm run db:types:check
+      - name: Verify concurrent agency user invitations
+        if: steps.changes.outputs.docs_only != 'true'
+        run: npm run db:test:user-invitation-concurrency
       - name: Build application
         if: steps.changes.outputs.docs_only != 'true'
         run: npm run build
