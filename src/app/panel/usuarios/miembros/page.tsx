@@ -5,6 +5,7 @@ import { getAgencyUserManagementAccess } from "@/features/user-invitations/serve
 import { listAgencyMembers } from "@/features/members/server/queries";
 import { canManageMember } from "@/features/members/schemas";
 import { MemberStatusButton } from "@/features/members/components/status-button";
+import { MemberRoleForm } from "@/features/members/components/role-form";
 import { roleLabels } from "@/features/access/domain";
 import { AccessShell } from "@/features/access/components/access-shell";
 export const dynamic = "force-dynamic";
@@ -67,6 +68,16 @@ export default async function MembersPage({
                   : "Sin permiso para cambiar este miembro"}
               </p>
             )}
+            {actorRole === "agency_superadmin" &&
+              member.user_id !== access.user.id &&
+              (member.role === "admin" || member.role === "seller") && (
+                <MemberRoleForm
+                  agencyId={agencyId}
+                  membershipId={member.id}
+                  role={member.role}
+                  isActive={member.is_active}
+                />
+              )}
           </li>
         ))}
       </ul>

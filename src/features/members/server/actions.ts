@@ -1,7 +1,23 @@
 "use server";
-import { memberStatusSchema } from "../schemas";
+import { memberStatusSchema, memberRoleSchema } from "../schemas";
 import { getAgencyUserManagementAccess } from "@/features/user-invitations/server/authorization";
-import { setAgencyMemberActive } from "./queries";
+import { setAgencyMemberActive, setAgencyMemberRole } from "./queries";
+
+export async function changeMemberRole(input: unknown) {
+  const parsed = memberRoleSchema.safeParse(input);
+  if (!parsed.success)
+    return {
+      ok: false as const,
+      error: "El cambio de rol no es válido. Recargá la lista.",
+    };
+  const access = await getAgencyUserManagementAccess(parsed.data.agencyId);
+  if (!access || access.membership.role !== "agency_superadmin")
+    return {
+      ok: false as const,
+      error: "Solo el superadministrador de esta agencia puede cambiar roles.",
+    };
+  return setAgencyMemberRole(access.client, parsed.data);
+}
 
 export async function changeMemberStatus(input: unknown) {
   const parsed = memberStatusSchema.safeParse(input);

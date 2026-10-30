@@ -103,6 +103,18 @@ Start `npm run functions:serve -- --e2e` for Next or `--worker` for local Worker
 
 `members.spec.ts` checks actual toggles, protected controls, access loss/restoration on reload with other agency access preserved, audit, stale UI, revoked actors and malformed/private routes. The [manual guide](manual-agency-members.md) provides setup, verification and scoped cleanup SQL preserving Auth/profiles/platform. No manual fixture execution, customer data, privileged application client or QueryClient is introduced. These checks do not certify a future private browser cache or future inventory/CRM rotation behavior.
 
+### Agency member role changes
+
+The role-change pgTAP suite first fails without the RPC/columns, then covers owner-only grants, anonymous/admin/seller/platform/foreign denial, self/owner protection, stale role/state and no-op rejection, inactive preservation, independent agency roles, live owner/agency revocation, pending invitation rejection after active inviter demotion, direct-write denial and audit rollback/attribution. The existing member concurrency command additionally races identical role changes (one event) and uses explicit barriers to verify both status and role conflicts with invitation locks, followed by successful retries.
+
+The member E2E suite adds promotion/demotion with live access checks in another browser, unchanged other-agency access, inactive preservation, stale activation snapshots, disabled no-op controls, admin/platform-only denial and a revoked owner's open form. Assertions wait for the server-rendered role paragraph after reload, rather than the select's optimistic local value. SDK test signouts use local scope to avoid revoking a browser session of the same identity. The [manual role guide](manual-agency-member-roles.md) includes ready SQL setup, audit queries and scoped cleanup using the QA accounts while preserving Auth/profiles/prior access. No manual setup SQL is executed by implementation.
+
+### Agency settings
+
+`agency_settings.test.sql` first fails before the migration, then verifies anonymous/seller/platform/foreign/forged denial, positive admin/owner writes, exact decimal storage, invalid rate/name rejection, stale and no-op denial, version protection after restoring prior values, name-only history, live revocation/inactive agency, history RLS/direct-write denial, audit linkage and atomic rollback. These 32 assertions supplement the previous 302, using synthetic transactional fixtures ending in ROLLBACK.
+
+The settings E2E suite uses real Auth/PostgreSQL on desktop/mobile. It covers shared input validation, comma normalization and precision at the numeric limit, persisted name and linked history/audit, independent access to another agency, seller/platform/foreign/anonymous denial, signed public-key RPC races with one winner, stale versions after restoring values, stale/revoked open forms, history pagination and malformed/duplicate selectors. Privileged clients only prepare/inspect/clean their UUID-scoped fixtures. Queries casting rates to text are exercised end to end. No mocks certify permissions. [Manual setup, verification and scoped cleanup SQL](manual-agency-settings.md) preserve Auth/profiles/prior access and are not executed by implementation. The history fixture pagination case uses explicit synthetic rows, not fabricated customer history.
+
 ### Full product fixtures
 
 Two agencies, each with superadmin/admin/two sellers, one inactive seller, and draft/published/reserved/sold vehicles. Distinct inquiries and private photos. A platform superadmin has an independent platform role. Test anonymous, each authenticated role and users without membership.

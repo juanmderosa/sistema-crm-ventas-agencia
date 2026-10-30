@@ -18,6 +18,7 @@ export type Database = {
           id: string;
           is_active: boolean;
           name: string;
+          settings_version: string;
           slug: string;
         };
         ComputedFields: never;
@@ -27,6 +28,7 @@ export type Database = {
           id?: string;
           is_active?: boolean;
           name: string;
+          settings_version?: string;
           slug: string;
         };
         Update: {
@@ -35,6 +37,7 @@ export type Database = {
           id?: string;
           is_active?: boolean;
           name?: string;
+          settings_version?: string;
           slug?: string;
         };
         Relationships: [];
@@ -97,6 +100,55 @@ export type Database = {
             columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      agency_settings_history: {
+        Row: {
+          actor_id: string;
+          agency_id: string;
+          created_at: string;
+          id: string;
+          new_ars_per_usd: number;
+          new_name: string;
+          previous_ars_per_usd: number;
+          previous_name: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          actor_id: string;
+          agency_id: string;
+          created_at?: string;
+          id?: string;
+          new_ars_per_usd: number;
+          new_name: string;
+          previous_ars_per_usd: number;
+          previous_name: string;
+        };
+        Update: {
+          actor_id?: string;
+          agency_id?: string;
+          created_at?: string;
+          id?: string;
+          new_ars_per_usd?: number;
+          new_name?: string;
+          previous_ars_per_usd?: number;
+          previous_name?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "agency_settings_history_actor_id_fkey";
+            columns: ["actor_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "agency_settings_history_agency_id_fkey";
+            columns: ["agency_id"];
+            isOneToOne: false;
+            referencedRelation: "agencies";
             referencedColumns: ["id"];
           },
         ];
@@ -175,6 +227,9 @@ export type Database = {
           id: string;
           invitation_id: string | null;
           membership_id: string | null;
+          new_role: string | null;
+          previous_role: string | null;
+          settings_change_id: string | null;
           target_user_id: string | null;
           user_invitation_id: string | null;
         };
@@ -187,6 +242,9 @@ export type Database = {
           id?: string;
           invitation_id?: string | null;
           membership_id?: string | null;
+          new_role?: string | null;
+          previous_role?: string | null;
+          settings_change_id?: string | null;
           target_user_id?: string | null;
           user_invitation_id?: string | null;
         };
@@ -198,6 +256,9 @@ export type Database = {
           id?: string;
           invitation_id?: string | null;
           membership_id?: string | null;
+          new_role?: string | null;
+          previous_role?: string | null;
+          settings_change_id?: string | null;
           target_user_id?: string | null;
           user_invitation_id?: string | null;
         };
@@ -228,6 +289,13 @@ export type Database = {
             columns: ["agency_id", "membership_id"];
             isOneToOne: false;
             referencedRelation: "memberships";
+            referencedColumns: ["agency_id", "id"];
+          },
+          {
+            foreignKeyName: "audit_events_settings_change_fk";
+            columns: ["agency_id", "settings_change_id"];
+            isOneToOne: false;
+            referencedRelation: "agency_settings_history";
             referencedColumns: ["agency_id", "id"];
           },
           {
@@ -418,6 +486,25 @@ export type Database = {
           p_expected_is_active: boolean;
           p_is_active: boolean;
           p_membership_id: string;
+        };
+        Returns: string;
+      };
+      set_agency_member_role: {
+        Args: {
+          p_agency_id: string;
+          p_expected_is_active: boolean;
+          p_expected_role: string;
+          p_membership_id: string;
+          p_role: string;
+        };
+        Returns: string;
+      };
+      update_agency_settings: {
+        Args: {
+          p_agency_id: string;
+          p_ars_per_usd: string;
+          p_expected_version: string;
+          p_name: string;
         };
         Returns: string;
       };

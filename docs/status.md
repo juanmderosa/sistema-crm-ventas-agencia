@@ -1,5 +1,37 @@
 # Estado de entrega
 
+## Agencias — configuración e historial (2026-10-30)
+
+En `codex/agency-settings`, limpia al iniciar: edición de nombre y cotización ARS/USD para superadministrador/admin activos de la agencia, desde un enlace del panel. Identificador público y estado no se editan. Form/Input compartidos, RHF/Zod y handler nombrado; consultas/RPC en adaptador separado. La validación decimal reutiliza la de alta y conserva texto hasta PostgreSQL, con doce enteros/seis decimales y sin redondeo JS. Lecturas de configuración/historial castean numeric a texto.
+
+Migración aditiva aplicada únicamente a Supabase local sin reset; tipos generados desde esa instancia. Historial inmutable de nombres/cotizaciones anteriores/nuevos con autor/fecha, lectura RLS solo para gestores de su agencia, y auditoría mínima ligada por FK compuesta. Un cambio de nombre sin cambio de cotización no inventa una variación de tasa. Versión UUID con comparación bajo lock de agencia rechaza formularios viejos incluso tras restaurar valores originales. Configuración, historial y auditoría se guardan juntos o se revierten juntos. Sin claves privilegiadas de aplicación, dependencias nuevas ni cambios de precio base de vehículos.
+
+Pruebas primero fallaron por ausencia de columna/RPC. Aprobaron 334 comprobaciones pgTAP (302 previas + 32 nuevas), formato/lint/TypeScript/Deno congelado, 21 pruebas unitarias, ocho del selector CI, comparación de tipos y build Next.js. Pasaron los 90 E2E completos de escritorio/móvil y los diez nuevos sobre Worker local con un proceso, con Auth real, precisión, historial, permisos, concurrencia con un ganador, protección contra versiones restauradas y formularios revocados/desactualizados. Captura móvil revisada y ancho comprobado sin desbordamiento.
+
+OpenNext build y Wrangler dry-run aprobados: 7563.42 KiB / gzip 1526.93 KiB, sin publicar. Persisten advertencias conocidas de Windows/Proxy experimental; el emulador no certifica rendimiento/estabilidad de producción. CI remoto sigue pendiente. Se retiró el cambio automático de next-env.d.ts y se detienen los servicios temporales conservando Supabase y sus datos. Próximo paso: validación manual y commit antes de avanzar con otra funcionalidad.
+
+La [guía manual](manual-agency-settings.md) incluye SQL de preparación/verificación/limpieza para las cuentas QA; no se ejecutó esa preparación ni se modificaron sus accesos anteriores. Sin operaciones de escritura Git ni despliegues.
+
+## Higiene de formato — incremento 1: configuración y procedimiento (2026-10-30)
+
+Diagnóstico: el comando `format` ejecutaba `prettier --write .`, por lo que una tarea funcional podía reescribir todo el repositorio. Prettier no declaraba finales de línea y faltaban `.gitattributes` y `.editorconfig`; en Windows, la configuración global `core.autocrlf=true` dejaba el resultado dependiente de cada entorno. ESLint y CI no eran el origen: CI usa `prettier --check .` y el lint no formatea.
+
+Se reemplaza el escritor global por `npm run format:files -- <archivo> [...]`, se fija LF para texto versionado y editores, y Prettier conserva el final de línea existente (`endOfLine: auto`) mientras no se apruebe una normalización global. La verificación global continúa siendo de solo lectura con `npm run format:check`. AGENTS.md exige formatear únicamente archivos del alcance, revisar el diff y reservar cualquier normalización de repositorio para un incremento/PR independiente aprobado. No se ejecutó una normalización global, no se agregaron dependencias, hooks ni reglas de estilo nuevas.
+
+Pendiente: confirmar y versionar este incremento. Solo después se podrá proponer, con alcance explícito y aprobación previa, una normalización global independiente si todavía resulta necesaria.
+
+## Usuarios de agencia — cambios de rol (2026-10-30)
+
+En `codex/agency-member-roles`, limpia al iniciar: formulario compartido RHF/Zod para cambiar entre administrador/vendedor desde el listado existente. Solo superadministradores activos de esa agencia; propia membresía y todos los superadministradores protegidos. Servidor y PostgreSQL revalidan autoridad, rol/estado esperados y agencia. Se conserva la membresía, el estado activo/inactivo, la cuenta y los accesos de otras agencias. Sin roles nuevos, reemplazo de propietario ni cambios de responsables de inventario/CRM.
+
+Migración aditiva aplicada solo a Supabase local sin reset; tipos generados desde esa instancia. El cambio y la auditoría membership.role_changed son atómicos, con roles anterior/nuevo reales y referencia compuesta a agencia/membresía. Los otros eventos mantienen esos campos nulos. Se conserva el orden de locks y rechazo NOWAIT con 40001 al cruzarse con un invitador ocupado. Pruebas primero fallaron por ausencia de RPC/columnas; luego aprobaron 302 comprobaciones pgTAP (275 previas + 27 nuevas), incluidas invitaciones pendientes tras democión de un administrador activo. La prueba de concurrencia ampliada verifica un solo evento por cambio y conflictos/reintentos sin deadlock.
+
+Verificado: formato, lint, TypeScript, Deno congelado, 20 pruebas unitarias, ocho del selector CI, tipos comparados con la instancia real y build Next.js. Pasaron los 80 E2E completos de escritorio/móvil y los doce casos de miembros sobre Worker local con un proceso. Se corrigieron las pruebas para esperar el rol renderizado por el servidor (no el valor local del selector) y cerrar solo la sesión SDK de prueba, sin revocar la sesión del navegador. No se ampliaron timeouts ni retiraron comprobaciones. Captura móvil revisada y ancho comprobado sin desbordamiento.
+
+OpenNext build y Wrangler dry-run aprobados: 7529.41 KiB / gzip 1522.19 KiB, sin publicar. Persisten advertencias conocidas de Windows/Proxy experimental; el emulador no certifica rendimiento/estabilidad de producción. CI remoto sigue pendiente. Se retiró el cambio automático de next-env.d.ts y se detienen los servicios temporales conservando Supabase y sus datos. Próximo paso: prueba manual y commit antes de continuar con otra funcionalidad.
+
+La [guía manual](manual-agency-member-roles.md) incluye SQL de carga, verificación y limpieza para tres cuentas QA y dos agencias propias, sin tocar accesos previos; no se ejecutó esa preparación. Sin dependencias nuevas, clientes privilegiados de aplicación, operaciones de escritura Git ni despliegues.
+
 ## Usuarios de agencia — miembros y estado de acceso (2026-10-30)
 
 En `codex/agency-members-management`, limpia al iniciar: listado SSR paginado de miembros activos/inactivos con nombre, UUID, rol y estado; desactivación/reactivación auditada desde la interfaz. Superadministrador administra admins/vendedores; admin solo vendedores; propia membresía y todos los superadministradores protegidos. Las cuentas, contraseñas y membresías de otras agencias se conservan; no se implementan cambios de rol. Autorización nueva en cada solicitud, estado esperado para detectar páginas desactualizadas y errores explícitos ante conflicto/transporte.

@@ -39,6 +39,13 @@
 - No production deployments, paid services or customer data in fixtures without the appropriate task scope.
 - Update docs/status.md with verified outcomes and remaining work each delivery.
 
+## Format and diff hygiene
+
+- Global verification remains read-only: use `npm run format:check`; do not use a repository-wide write formatter during a functional task.
+- After changing a task's files, format only Prettier-supported files from that task with `npm run format:files -- <file> [<file> ...]`, then review `git diff --check`, `git diff -- <file> ...` and `git status --short` before delivery.
+- A repository-wide format or line-ending normalization requires its own maintenance increment and PR. Define its scope first, obtain approval, and do not mix it with functional changes.
+- Preserve pre-existing work: do not restore, stage, or alter unrelated paths discovered in the diff. Report them to the user.
+
 ## Git workflow
 
 - The user manages Git operations, remote connections and pushes. Unless explicitly authorized for a specific action, do not stage, commit, create/switch/delete branches, merge, rebase, tag or push. Read-only Git inspection is allowed.

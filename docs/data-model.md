@@ -1,5 +1,13 @@
 # Data model
 
+## Agency settings history
+
+`agencies.settings_version` is an optimistic-edit UUID, generated initially and replaced with the new change record ID after an edit. `agency_settings_history` stores agency/actor foreign keys, previous/new names, previous/new numeric(18,6) positive rates and created_at, indexed by agency/date/id and actor. Name or rate must actually change. Its agency/id unique pair supports audit_events.settings_change_id as a composite FK. agency.settings_updated requires that reference and no membership/invitation/target reference; older actions cannot use it. Name-only edits retain equal rates explicitly. History is management-readable within its agency and client-immutable; current configuration and history/audit are updated atomically with a version guard. The full-product rate_history design is realized here as combined settings history, keeping a single author/transaction for simultaneous name/rate changes.
+
+## Role change audit (2026-10-30)
+
+`audit_events.previous_role` and `new_role` are required distinct admin/seller values only for membership.role_changed, and null for all other audit actions. The existing agency/membership composite FK and separate actor/target attribution remain authoritative. Role changes update only memberships.role, preserving identity, active state and other agency memberships. Initial-owner assignment/replacement is not part of this operation.
+
 ## Membership status audit (2026-10-30)
 
 `audit_events.membership_id` uses the existing memberships agency/id unique pair through a composite FK. Only membership.activated/deactivated may use it, with target_user_id required and no invitation references. Historical actions remain compatible and cannot use this column. The guarded roster RPC returns membership identity, linked profile display name, current role/state and creation time; it exposes neither global profiles nor Auth email/password data. Deactivation/reactivation preserves the membership UUID/role and all other agency memberships. There is no account deletion or owner replacement in this increment.

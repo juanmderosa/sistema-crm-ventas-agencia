@@ -2,8 +2,35 @@ import "server-only";
 import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { memberRowsSchema, memberStatusSchema } from "../schemas";
+import {
+  memberRowsSchema,
+  memberStatusSchema,
+  memberRoleSchema,
+} from "../schemas";
 type Client = SupabaseClient<Database>;
+export async function setAgencyMemberRole(
+  client: Client,
+  input: z.infer<typeof memberRoleSchema>,
+) {
+  const result = await client.rpc("set_agency_member_role", {
+    p_agency_id: input.agencyId,
+    p_membership_id: input.membershipId,
+    p_role: input.role,
+    p_expected_role: input.expectedRole,
+    p_expected_is_active: input.expectedIsActive,
+  });
+  if (result.error)
+    return {
+      ok: false as const,
+      error:
+        result.error.code === "40001"
+          ? "El rol o el estado cambió, o el miembro está ocupado. Recargá la lista y volvé a intentar."
+          : "No se pudo cambiar el rol. Revisá tus permisos y recargá la lista.",
+    };
+  if (!z.uuid().safeParse(result.data).success)
+    throw new Error("No se pudo confirmar el rol. Recargá la lista.");
+  return { ok: true as const };
+}
 export async function listAgencyMembers(
   client: Client,
   agencyId: string,
