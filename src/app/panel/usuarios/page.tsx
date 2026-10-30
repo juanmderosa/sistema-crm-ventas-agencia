@@ -39,6 +39,13 @@ export default async function AgencyUsersPage({
     <AccessShell>
       <p className="eyebrow">USUARIOS DE AGENCIA</p>
       <h1>Invitar usuarios</h1>
+      <nav className="agency-actions">
+        <a
+          href={`/panel/usuarios/miembros?agency=${access.membership.agency.id}`}
+        >
+          Ver miembros de agencia
+        </a>
+      </nav>
       <h2 className="access-agency-name">{agency.name}</h2>
       <p className="auth-description">
         Las cuentas nuevas definen una contraseña al aceptar. Las existentes

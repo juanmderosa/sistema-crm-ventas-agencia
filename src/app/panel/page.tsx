@@ -82,6 +82,11 @@ export default async function PanelPage({
               <a href={`/panel/usuarios?agency=${access.membership.agency.id}`}>
                 Administrar invitaciones de usuarios
               </a>
+              <a
+                href={`/panel/usuarios/miembros?agency=${access.membership.agency.id}`}
+              >
+                Ver miembros de agencia
+              </a>
             </nav>
           )}
         </>

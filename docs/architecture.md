@@ -119,6 +119,12 @@ The `invite-agency-user` Edge Function follows the same authenticated provisioni
 
 The local helper serves both functions and the E2E preflight waits for each handler's 401 envelope. Auth redirect URLs and Magic Link template are versioned local configuration, applied with a data-preserving restart. Hosted SMTP, templates, exact allowed URLs, APP_ORIGIN and both Edge deployments require separate configuration/verification.
 
+### Agency membership management
+
+`/panel/usuarios/miembros?agency=<uuid>` lists twenty members per page (including inactive), displaying name/user UUID/role/state. URL owns pagination; fresh Server Components and full document reload after mutation avoid introducing client remote cache. Existing agency management authorization is reused; data access is isolated in the members feature. Global profiles RLS is unchanged: guarded `list_agency_members` exposes only names linked to the selected agency's roster, without Auth emails. It requires an active management membership and agency, irrespective of platform assignment.
+
+`set_agency_member_active` allows owners to manage admins/sellers and admins to manage sellers, excluding the actor and every superadmin. It never changes roles, deletes accounts or modifies another agency. Requested/expected booleans must represent a real transition; stale expected state fails with 40001. Locks follow actor SHARE -> agency UPDATE -> target UPDATE, consistent with invitation APIs. Target UPDATE uses NOWAIT: a target admin can already hold SHARE while waiting for the agency in an invitation transaction, so waiting there would create a lock cycle. Conflicts abort for explicit reload/retry; a later successful revocation invalidates that author's pending grants. State and membership.activated/deactivated audit commit together; the agency/membership composite FK prevents cross-agency attribution. Direct writes and audit visibility remain unchanged. Revocation applies on the next request; future inventory/CRM/rotation behavior is outside this increment.
+
 ### Product rules
 
 - Vehicle publication (draft/published) is separate from availability (available/reserved/sold).

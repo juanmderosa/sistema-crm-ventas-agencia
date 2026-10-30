@@ -25,6 +25,7 @@
     "db:start": "supabase start",
     "db:stop": "supabase stop",
     "db:test": "supabase test db",
+    "db:test:member-concurrency": "node scripts/test-member-concurrency.mjs",
     "db:test:user-invitation-concurrency": "node scripts/test-user-invitation-concurrency.mjs",
     "db:migrate": "supabase migration up --local",
     "db:types": "node scripts/database-types.mjs",
