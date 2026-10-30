@@ -21,6 +21,8 @@ Implemented authentication/access: `/login` accepts existing email/password acco
 
 Planned routes are not implemented placeholders and must not be represented as working. `/panel/usuarios?agency=<uuid>` now implements agency admin/seller invitations, paginated status and cancellation; `/invitaciones/usuarios/aceptar` handles new and existing accounts. Platform access by itself does not authorize agency user management; an explicit active agency management membership is required. `/panel/usuarios/miembros?agency=<uuid>` lists members and implements audited deactivation/reactivation with owner/self protection. Owners manage admins/sellers; admins only sellers. Only the agency superadmin can change other admin/seller roles, preserving active state and other agencies; own membership and all superadmins are protected.
 
+`/panel/agencia?agency=<uuid>` now edits agency name and ARS/USD rate with immutable history and stale-version protection. Active admins/superadmins may edit/read history in their agency; sellers/platform-only assignments cannot. Slug, contacts and agency activation remain separate work.
+
 ## Permission matrix
 
 Platform superadmin can access all agencies. Other roles are scoped to active agency membership.
