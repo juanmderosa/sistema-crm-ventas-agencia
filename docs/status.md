@@ -1,5 +1,13 @@
 # Estado de entrega
 
+## Higiene de formato — incremento 1: configuración y procedimiento (2026-10-30)
+
+Diagnóstico: el comando `format` ejecutaba `prettier --write .`, por lo que una tarea funcional podía reescribir todo el repositorio. Prettier no declaraba finales de línea y faltaban `.gitattributes` y `.editorconfig`; en Windows, la configuración global `core.autocrlf=true` dejaba el resultado dependiente de cada entorno. ESLint y CI no eran el origen: CI usa `prettier --check .` y el lint no formatea.
+
+Se reemplaza el escritor global por `npm run format:files -- <archivo> [...]`, se fija LF para texto versionado y editores, y Prettier conserva el final de línea existente (`endOfLine: auto`) mientras no se apruebe una normalización global. La verificación global continúa siendo de solo lectura con `npm run format:check`. AGENTS.md exige formatear únicamente archivos del alcance, revisar el diff y reservar cualquier normalización de repositorio para un incremento/PR independiente aprobado. No se ejecutó una normalización global, no se agregaron dependencias, hooks ni reglas de estilo nuevas.
+
+Pendiente: confirmar y versionar este incremento. Solo después se podrá proponer, con alcance explícito y aprobación previa, una normalización global independiente si todavía resulta necesaria.
+
 ## Usuarios de agencia — cambios de rol (2026-10-30)
 
 En `codex/agency-member-roles`, limpia al iniciar: formulario compartido RHF/Zod para cambiar entre administrador/vendedor desde el listado existente. Solo superadministradores activos de esa agencia; propia membresía y todos los superadministradores protegidos. Servidor y PostgreSQL revalidan autoridad, rol/estado esperados y agencia. Se conserva la membresía, el estado activo/inactivo, la cuenta y los accesos de otras agencias. Sin roles nuevos, reemplazo de propietario ni cambios de responsables de inventario/CRM.
