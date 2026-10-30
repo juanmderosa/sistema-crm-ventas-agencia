@@ -1,5 +1,13 @@
 # Data model
 
+## Role change audit (2026-10-30)
+
+`audit_events.previous_role` and `new_role` are required distinct admin/seller values only for membership.role_changed, and null for all other audit actions. The existing agency/membership composite FK and separate actor/target attribution remain authoritative. Role changes update only memberships.role, preserving identity, active state and other agency memberships. Initial-owner assignment/replacement is not part of this operation.
+
+## Membership status audit (2026-10-30)
+
+`audit_events.membership_id` uses the existing memberships agency/id unique pair through a composite FK. Only membership.activated/deactivated may use it, with target_user_id required and no invitation references. Historical actions remain compatible and cannot use this column. The guarded roster RPC returns membership identity, linked profile display name, current role/state and creation time; it exposes neither global profiles nor Auth email/password data. Deactivation/reactivation preserves the membership UUID/role and all other agency memberships. There is no account deletion or owner replacement in this increment.
+
 ## Agency user invitation contract (2026-10-29)
 
 `agency_user_invitations` implements the employee invitation lifecycle separately from the platform's initial-owner `agency_invitations`. It stores agency/inviter/profile foreign keys, normalized email, display name, fixed admin/seller role, bound recipient, sending/sent/failed/accepted/cancelled state and timestamps (one-hour default expiry). Accepted requires accepted_at; sent/accepted require a bound recipient. The agency/id unique pair supports the audit composite foreign key, preventing cross-agency invitation attribution. Indexes cover agency/date, inviter and recipient.

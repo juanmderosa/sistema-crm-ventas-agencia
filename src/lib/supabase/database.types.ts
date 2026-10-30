@@ -174,6 +174,9 @@ export type Database = {
           created_at: string;
           id: string;
           invitation_id: string | null;
+          membership_id: string | null;
+          new_role: string | null;
+          previous_role: string | null;
           target_user_id: string | null;
           user_invitation_id: string | null;
         };
@@ -185,6 +188,9 @@ export type Database = {
           created_at?: string;
           id?: string;
           invitation_id?: string | null;
+          membership_id?: string | null;
+          new_role?: string | null;
+          previous_role?: string | null;
           target_user_id?: string | null;
           user_invitation_id?: string | null;
         };
@@ -195,6 +201,9 @@ export type Database = {
           created_at?: string;
           id?: string;
           invitation_id?: string | null;
+          membership_id?: string | null;
+          new_role?: string | null;
+          previous_role?: string | null;
           target_user_id?: string | null;
           user_invitation_id?: string | null;
         };
@@ -219,6 +228,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "agency_invitations";
             referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "audit_events_membership_fk";
+            columns: ["agency_id", "membership_id"];
+            isOneToOne: false;
+            referencedRelation: "memberships";
+            referencedColumns: ["agency_id", "id"];
           },
           {
             foreignKeyName: "audit_events_target_user_id_fkey";
@@ -383,12 +399,42 @@ export type Database = {
         };
         Returns: undefined;
       };
+      list_agency_members: {
+        Args: { p_agency_id: string; p_offset?: number };
+        Returns: {
+          created_at: string;
+          display_name: string;
+          id: string;
+          is_active: boolean;
+          role: string;
+          user_id: string;
+        }[];
+      };
       prepare_existing_agency_user_invitation: {
         Args: { p_invitation_id: string };
         Returns: string;
       };
       prepare_existing_invitation_profile: {
         Args: { p_invitation_id: string };
+        Returns: string;
+      };
+      set_agency_member_active: {
+        Args: {
+          p_agency_id: string;
+          p_expected_is_active: boolean;
+          p_is_active: boolean;
+          p_membership_id: string;
+        };
+        Returns: string;
+      };
+      set_agency_member_role: {
+        Args: {
+          p_agency_id: string;
+          p_expected_is_active: boolean;
+          p_expected_role: string;
+          p_membership_id: string;
+          p_role: string;
+        };
         Returns: string;
       };
     };

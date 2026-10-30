@@ -59,6 +59,9 @@ jobs:
       - name: Verify concurrent agency user invitations
         if: steps.changes.outputs.docs_only != 'true'
         run: npm run db:test:user-invitation-concurrency
+      - name: Verify concurrent membership changes
+        if: steps.changes.outputs.docs_only != 'true'
+        run: npm run db:test:member-concurrency
       - name: Build application
         if: steps.changes.outputs.docs_only != 'true'
         run: npm run build

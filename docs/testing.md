@@ -97,6 +97,18 @@ The application increment adds unit validation of target roles/agency selectors 
 
 Start `npm run functions:serve -- --e2e` for Next or `--worker` for local Worker. The helper now serves both functions, each with its explicit bearer validation; the browser preflight checks both. Manual commands and SQL setup/verification/scoped cleanup are in [agency user invitations](manual-agency-user-invitations.md). The setup preserves all prior Auth/profiles and existing agency assignments; it is not executed as part of implementation. Actual email proof is certified by browser tests rather than SQL password markers. Auth's full one-hour clock and hosted SMTP/Edge/CI remain separate checks.
 
+### Agency membership management
+
+`agency_members_management.test.sql` verifies protected owner/self, peer-admin denial, seller/platform/foreign denial, bounded paginated roster, inactive visibility, stale/no-op/null state denial, independent other-agency roles, reactivation, actor/agency revocation, direct-write denial and audit rollback/attribution. Tests first fail without the RPCs; fixtures and rejecting trigger roll back. `npm run db:test:member-concurrency` uses independent local psql sessions and explicit barriers: competing expected-state mutations yield one event, and a target admin holding SHARE while waiting for the agency produces 40001 rather than deadlock. Revocation succeeds on retry after release. Only generated fixture UUIDs are cleaned. CI includes the command.
+
+`members.spec.ts` checks actual toggles, protected controls, access loss/restoration on reload with other agency access preserved, audit, stale UI, revoked actors and malformed/private routes. The [manual guide](manual-agency-members.md) provides setup, verification and scoped cleanup SQL preserving Auth/profiles/platform. No manual fixture execution, customer data, privileged application client or QueryClient is introduced. These checks do not certify a future private browser cache or future inventory/CRM rotation behavior.
+
+### Agency member role changes
+
+The role-change pgTAP suite first fails without the RPC/columns, then covers owner-only grants, anonymous/admin/seller/platform/foreign denial, self/owner protection, stale role/state and no-op rejection, inactive preservation, independent agency roles, live owner/agency revocation, pending invitation rejection after active inviter demotion, direct-write denial and audit rollback/attribution. The existing member concurrency command additionally races identical role changes (one event) and uses explicit barriers to verify both status and role conflicts with invitation locks, followed by successful retries.
+
+The member E2E suite adds promotion/demotion with live access checks in another browser, unchanged other-agency access, inactive preservation, stale activation snapshots, disabled no-op controls, admin/platform-only denial and a revoked owner's open form. Assertions wait for the server-rendered role paragraph after reload, rather than the select's optimistic local value. SDK test signouts use local scope to avoid revoking a browser session of the same identity. The [manual role guide](manual-agency-member-roles.md) includes ready SQL setup, audit queries and scoped cleanup using the QA accounts while preserving Auth/profiles/prior access. No manual setup SQL is executed by implementation.
+
 ### Full product fixtures
 
 Two agencies, each with superadmin/admin/two sellers, one inactive seller, and draft/published/reserved/sold vehicles. Distinct inquiries and private photos. A platform superadmin has an independent platform role. Test anonymous, each authenticated role and users without membership.

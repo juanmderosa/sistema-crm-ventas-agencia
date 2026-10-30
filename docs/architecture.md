@@ -119,6 +119,18 @@ The `invite-agency-user` Edge Function follows the same authenticated provisioni
 
 The local helper serves both functions and the E2E preflight waits for each handler's 401 envelope. Auth redirect URLs and Magic Link template are versioned local configuration, applied with a data-preserving restart. Hosted SMTP, templates, exact allowed URLs, APP_ORIGIN and both Edge deployments require separate configuration/verification.
 
+### Agency membership management
+
+`/panel/usuarios/miembros?agency=<uuid>` lists twenty members per page (including inactive), displaying name/user UUID/role/state. URL owns pagination; fresh Server Components and full document reload after mutation avoid introducing client remote cache. Existing agency management authorization is reused; data access is isolated in the members feature. Global profiles RLS is unchanged: guarded `list_agency_members` exposes only names linked to the selected agency's roster, without Auth emails. It requires an active management membership and agency, irrespective of platform assignment.
+
+`set_agency_member_active` allows owners to manage admins/sellers and admins to manage sellers, excluding the actor and every superadmin. It never changes roles, deletes accounts or modifies another agency. Requested/expected booleans must represent a real transition; stale expected state fails with 40001. Locks follow actor SHARE -> agency UPDATE -> target UPDATE, consistent with invitation APIs. Target UPDATE uses NOWAIT: a target admin can already hold SHARE while waiting for the agency in an invitation transaction, so waiting there would create a lock cycle. Conflicts abort for explicit reload/retry; a later successful revocation invalidates that author's pending grants. State and membership.activated/deactivated audit commit together; the agency/membership composite FK prevents cross-agency attribution. Direct writes and audit visibility remain unchanged. Revocation applies on the next request; future inventory/CRM/rotation behavior is outside this increment.
+
+### Agency member role changes
+
+The existing member roster offers a shared RHF/Zod Form/Select for other admins/sellers only when the current actor is an agency superadmin. `set_agency_member_role` independently verifies the active owner and agency, prohibits self/owner changes and accepts only distinct admin/seller roles. The action derives authority from the current membership; platform assignment or submitted metadata grants nothing. Requested role, expected role and expected active state are validated. Stale role or status fails with 40001; inactive members remain inactive, membership UUID/account/other agencies remain unchanged. Fresh document navigation applies current permissions without replacing JWTs or introducing private client cache.
+
+The RPC uses the existing actor SHARE -> agency UPDATE -> target UPDATE NOWAIT order. Conflicts with an inviter holding the target row reject explicitly for reload/retry, avoiding lock cycles. Role mutation plus membership.role_changed audit commit atomically. previous_role/new_role are required, distinct admin/seller values for that action and null for all historical actions; the existing agency/membership composite FK binds attribution. Pending invitations revalidate their author's current role at acceptance, so demotion to seller prevents subsequent grants without silently cancelling their records. No new roles, owner replacement or future inventory/CRM responsibility migration is implemented.
+
 ### Product rules
 
 - Vehicle publication (draft/published) is separate from availability (available/reserved/sold).
