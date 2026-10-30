@@ -4,6 +4,7 @@ import { getPlatformAgencyAccess } from "@/features/agencies/server/authorizatio
 import { listPlatformAgencies } from "@/features/agencies/server/queries";
 import { agencyPageSchema } from "@/features/agencies/schemas";
 import { getCurrentUser } from "@/features/auth/server/session";
+import { AgencyActivationButton } from "@/features/agencies/components/activation-button";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Agencias · Plataforma" };
@@ -35,6 +36,11 @@ export default async function AgenciesPage({
     <AccessShell>
       <p className="eyebrow">PLATAFORMA</p>
       <h1>Agencias</h1>
+      <p className="auth-description">
+        Desactivar bloquea los accesos de esa agencia y la aceptación de sus
+        invitaciones. Reactivar conserva el rol y el estado individual de cada
+        membresía.
+      </p>
       <nav className="agency-actions" aria-label="Administración de agencias">
         <a href="/plataforma/agencias/nueva">Crear agencia</a>
         <a href="/plataforma">Volver a plataforma</a>
@@ -63,6 +69,11 @@ export default async function AgenciesPage({
                   <dd>{agency.ars_per_usd}</dd>
                 </div>
               </dl>
+              <AgencyActivationButton
+                agencyId={agency.id}
+                isActive={agency.is_active}
+                version={agency.status_version}
+              />
             </li>
           ))}
         </ul>

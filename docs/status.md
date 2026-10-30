@@ -1,5 +1,17 @@
 # Estado de entrega
 
+## Agencias — activación desde plataforma (2026-10-30)
+
+En `codex/agency-activation`, limpia al iniciar: controles de desactivar/reactivar en el listado de plataforma, con versión de estado propia, Zod, handler nombrado y adaptador de datos separado. Solo plataforma activa; roles de agencia o metadata no autorizan. El cambio conserva configuración, cuentas y las membresías/roles/estados individuales, sin conceder acceso a miembros inactivos al reactivar. Las otras agencias permanecen independientes. Navegación completa y lecturas SSR, sin cache privado nuevo.
+
+Migración aditiva aplicada únicamente a Supabase local sin reset. Estado/versión/auditoría atómicos con autor y booleanos anterior/nuevo válidos; los otros eventos mantienen esos campos nulos. El lock de agencia serializa aceptación y suspensión; el destinatario no tiene acceso una vez inactiva, tanto si su aceptación se confirmó antes como si fue rechazada después. Las invitaciones no se cancelan ni prolongan: solo pueden retomarse al reactivar si siguen vigentes y autorizadas.
+
+Pruebas primero fallaron por ausencia de columna/RPC. Pasaron 369 comprobaciones pgTAP (334 previas + 35 nuevas), comparación de tipos reales, formato/lint/TypeScript/Deno congelado, 22 pruebas unitarias, ocho del selector CI y build Next.js. Aprobaron los 98 E2E completos en escritorio/móvil con Auth/Edge/Mailpit reales, incluidos carreras, ambas clases de invitación, preservación de miembros y controles desactualizados/revocados. Captura móvil revisada y ancho comprobado sin desbordamientos.
+
+La primera corrida Worker dejó seis de ocho casos aprobados: en escritorio la acción HTTP 200 y su recarga demoraron la actualización más allá de la aserción; en móvil la traza registró ERR_NETWORK_IO_SUSPENDED con una navegación detenida unos 225 segundos, invalidando esa corrida. La repetición sin cambios ni aumentos de tiempo aprobó los ocho casos con un proceso en 29.6 segundos. OpenNext build y Wrangler dry-run aprobados: 7576.01 KiB / gzip 1528.71 KiB, sin publicar. Persisten advertencias conocidas de Windows/Proxy experimental; esta verificación local no certifica rendimiento/estabilidad de producción.
+
+Se retiró la modificación automática de next-env.d.ts y se detienen los servicios temporales conservando Supabase y sus datos. Tipos generados desde la instancia migrada; sin dependencias nuevas ni claves privilegiadas de aplicación. La [guía manual](manual-agency-activation.md) incluye SQL de carga/verificación/limpieza y preserva asignaciones previas de plataforma por defecto; no se ejecutó esa preparación. Sin operaciones de escritura Git ni despliegues. CI remoto pendiente. Próximo paso: prueba manual y commit del incremento.
+
 ## Agencias — configuración e historial (2026-10-30)
 
 En `codex/agency-settings`, limpia al iniciar: edición de nombre y cotización ARS/USD para superadministrador/admin activos de la agencia, desde un enlace del panel. Identificador público y estado no se editan. Form/Input compartidos, RHF/Zod y handler nombrado; consultas/RPC en adaptador separado. La validación decimal reutiliza la de alta y conserva texto hasta PostgreSQL, con doce enteros/seis decimales y sin redondeo JS. Lecturas de configuración/historial castean numeric a texto.

@@ -20,6 +20,7 @@ export type Database = {
           name: string;
           settings_version: string;
           slug: string;
+          status_version: string;
         };
         ComputedFields: never;
         Insert: {
@@ -30,6 +31,7 @@ export type Database = {
           name: string;
           settings_version?: string;
           slug: string;
+          status_version?: string;
         };
         Update: {
           ars_per_usd?: number;
@@ -39,6 +41,7 @@ export type Database = {
           name?: string;
           settings_version?: string;
           slug?: string;
+          status_version?: string;
         };
         Relationships: [];
       };
@@ -227,7 +230,9 @@ export type Database = {
           id: string;
           invitation_id: string | null;
           membership_id: string | null;
+          new_is_active: boolean | null;
           new_role: string | null;
+          previous_is_active: boolean | null;
           previous_role: string | null;
           settings_change_id: string | null;
           target_user_id: string | null;
@@ -242,7 +247,9 @@ export type Database = {
           id?: string;
           invitation_id?: string | null;
           membership_id?: string | null;
+          new_is_active?: boolean | null;
           new_role?: string | null;
+          previous_is_active?: boolean | null;
           previous_role?: string | null;
           settings_change_id?: string | null;
           target_user_id?: string | null;
@@ -256,7 +263,9 @@ export type Database = {
           id?: string;
           invitation_id?: string | null;
           membership_id?: string | null;
+          new_is_active?: boolean | null;
           new_role?: string | null;
+          previous_is_active?: boolean | null;
           previous_role?: string | null;
           settings_change_id?: string | null;
           target_user_id?: string | null;
@@ -478,6 +487,14 @@ export type Database = {
       };
       prepare_existing_invitation_profile: {
         Args: { p_invitation_id: string };
+        Returns: string;
+      };
+      set_agency_active: {
+        Args: {
+          p_agency_id: string;
+          p_expected_version: string;
+          p_is_active: boolean;
+        };
         Returns: string;
       };
       set_agency_member_active: {

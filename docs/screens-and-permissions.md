@@ -23,6 +23,8 @@ Planned routes are not implemented placeholders and must not be represented as w
 
 `/panel/agencia?agency=<uuid>` now edits agency name and ARS/USD rate with immutable history and stale-version protection. Active admins/superadmins may edit/read history in their agency; sellers/platform-only assignments cannot. Slug, contacts and agency activation remain separate work.
 
+Platform agency listing now implements audited activation/deactivation with stale-version protection. Only active platform assignments authorize it; agency roles do not. Reactivation preserves individual membership states and invitation expiry. Future public/inventory routes still require their own active-agency checks.
+
 ## Permission matrix
 
 Platform superadmin can access all agencies. Other roles are scoped to active agency membership.
