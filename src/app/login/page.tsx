@@ -9,7 +9,10 @@ export const metadata = { title: "Ingresar · Concesionarias" };
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ recovered?: string | string[] }>;
+  searchParams: Promise<{
+    recovered?: string | string[];
+    invited?: string | string[];
+  }>;
 }) {
   if (await getCurrentUser()) redirect("/panel");
   return (
@@ -24,6 +27,9 @@ export default async function LoginPage({
           Usá el correo y la contraseña de tu cuenta habilitada.
         </p>
         <LoginForm />
+        {(await searchParams).invited === "1" && (
+          <p role="status">Invitación aceptada. Ingresá con tu cuenta.</p>
+        )}
         {(await searchParams).recovered === "1" && (
           <p role="status">
             Contraseña actualizada. Ingresá con tu nueva contraseña.

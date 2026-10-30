@@ -1,5 +1,15 @@
 # Data model
 
+## Membership status audit (2026-10-30)
+
+`audit_events.membership_id` uses the existing memberships agency/id unique pair through a composite FK. Only membership.activated/deactivated may use it, with target_user_id required and no invitation references. Historical actions remain compatible and cannot use this column. The guarded roster RPC returns membership identity, linked profile display name, current role/state and creation time; it exposes neither global profiles nor Auth email/password data. Deactivation/reactivation preserves the membership UUID/role and all other agency memberships. There is no account deletion or owner replacement in this increment.
+
+## Agency user invitation contract (2026-10-29)
+
+`agency_user_invitations` implements the employee invitation lifecycle separately from the platform's initial-owner `agency_invitations`. It stores agency/inviter/profile foreign keys, normalized email, display name, fixed admin/seller role, bound recipient, sending/sent/failed/accepted/cancelled state and timestamps (one-hour default expiry). Accepted requires accepted_at; sent/accepted require a bound recipient. The agency/id unique pair supports the audit composite foreign key, preventing cross-agency invitation attribution. Indexes cover agency/date, inviter and recipient.
+
+`audit_events.user_invitation_id` references that pair. New actions user_invitation.sent, user_invitation.cancelled, membership.user_invited and user_invitation.accepted cannot refer to the initial-owner invitation column. Existing actions remain compatible and cannot refer to employee invitations. Audit writes remain guarded, with platform-only reads. RLS and RPC authorization differ from initial-owner provisioning: current agency superadmin can manage admin/seller invitations, admin only seller invitations, and each bound recipient can read its own record. No employee email/UI path is implemented in this database increment. See architecture/testing for mutation, locking and acceptance rules.
+
 The table below remains the design baseline for the complete product. Migration `20261027000000_agencies_roles.sql` implements only agencies, profiles, memberships and platform_admins, verified on local Supabase. Types for the public schema are generated from migrated local Supabase in `src/lib/supabase/database.types.ts`; CI checks for drift. They describe database structure, not permission to execute writes.
 
 ## Implemented authorization foundation
@@ -17,6 +27,16 @@ Role management, audited writes, exchange-rate history, public agency projection
 Migration `20261027010000_platform_agency_creation.sql` adds `audit_events` with UUID, agency reference, actor profile reference, action `agency.created` and timestamp. Both references restrict deletion. Its current action constraint intentionally covers only this delivered operation; other audit events remain future schema changes. RLS permits active platform reads only, with no authenticated mutation grants.
 
 The authenticated RPC `create_agency(text,text,text)` checks and locks the caller's active platform assignment, validates canonical slug/name/exact decimal rate, and creates an active agency plus its audit event in one transaction. It cannot accept a client-selected actor or assign memberships. No broader write permissions were added to existing tables. Database types are regenerated from the migrated local instance. The read-only foundation descriptions above describe the original migration; this RPC is the new, narrowly scoped mutation boundary.
+
+## Initial owner assignment
+
+Migration `20261028000000_initial_agency_superadmin.sql` extends audit_events with nullable target_user_id (profile FK with restricted deletion). agency.created requires null; membership.superadmin_assigned requires a target. The latter records the assigned user independently of the actor. The new authenticated RPC validates platform authority and existing target profile, locks the agency, and atomically inserts membership plus event. It does not alter prior memberships or allow replacing active/inactive owner history. No change to the membership table's general role cardinality or legacy data is required; competing calls through this initial-assignment API are serialized per agency.
+
+## Invitation lifecycle
+
+Migrations `20261028010000_superadmin_invitations.sql` and `20261028010100_existing_invitation_profiles.sql` add agency_invitations with agency/author references, normalized email/name, optional bound profile, lifecycle state, expiry and acceptance timestamp. Active platform users read the records; bound recipients read their own. Clients have no mutation grants. audit_events gains an invitation FK and sent/accepted/cancelled actions; all existing audit variants remain valid. Deletions are restricted, preserving references rather than cascading through identities.
+
+Guarded RPCs reserve, cancel and accept invitations under an agency lock. Delivery binding and confirmed existing-account profile preparation are service-only operations used by the administrative Edge adapter. Public acceptance checks the stored user ID, current verified Auth email and configured password; it does not accept actor/role/agency ownership from the recipient. Identity/authority/expiry/state are rechecked on every attempt. A sent invitation grants no membership; acceptance inserts membership/audit and consumes the invitation in one transaction. Existing-profile assignment now blocks pending reservations and unconfirmed targets; its previous SQL fixture identities were marked confirmed to preserve their intended eligible state, without removing prior assertions.
 
 ## Planned product entities
 

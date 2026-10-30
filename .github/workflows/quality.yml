@@ -56,12 +56,22 @@ jobs:
       - name: Verify generated database types
         if: steps.changes.outputs.docs_only != 'true'
         run: npm run db:types:check
+      - name: Verify concurrent agency user invitations
+        if: steps.changes.outputs.docs_only != 'true'
+        run: npm run db:test:user-invitation-concurrency
+      - name: Verify concurrent membership changes
+        if: steps.changes.outputs.docs_only != 'true'
+        run: npm run db:test:member-concurrency
       - name: Build application
         if: steps.changes.outputs.docs_only != 'true'
         run: npm run build
       - name: Install Chromium and system dependencies
         if: steps.changes.outputs.docs_only != 'true'
         run: npx playwright install --with-deps chromium
+      - name: Start local invitation function
+        if: steps.changes.outputs.docs_only != 'true'
+        shell: bash
+        run: npm run functions:serve -- --e2e > "$RUNNER_TEMP/invitation-function.log" 2>&1 &
       - name: Run browser tests
         if: steps.changes.outputs.docs_only != 'true'
         run: npm run test:e2e

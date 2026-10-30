@@ -1,0 +1,61 @@
+begin;
+create extension if not exists pgtap with schema extensions;
+select plan(22);
+insert into auth.users(id,email_confirmed_at) values ('d3300000-0000-4000-8000-000000000001',now()), ('d3300000-0000-4000-8000-000000000002',now()), ('d3300000-0000-4000-8000-000000000003',now());
+insert into public.profiles(id,display_name) select id,'QA asignación' from auth.users where id in ('d3300000-0000-4000-8000-000000000001','d3300000-0000-4000-8000-000000000002','d3300000-0000-4000-8000-000000000003');
+insert into public.platform_admins(user_id) values ('d3300000-0000-4000-8000-000000000001');
+insert into public.agencies(id,name,slug,ars_per_usd,is_active) values
+('d4400000-0000-4000-8000-000000000001','QA asignación','qa-assignment-db',1000,true),
+('d4400000-0000-4000-8000-000000000002','QA inactiva','qa-assignment-inactive',1000,false);
+set local role anon;
+select throws_ok($$select public.assign_initial_agency_superadmin('d4400000-0000-4000-8000-000000000001','d3300000-0000-4000-8000-000000000002')$$,'42501',null,'Anonymous denied');
+set local role authenticated;
+select set_config('request.jwt.claims','{"sub":"d3300000-0000-4000-8000-000000000002","role":"authenticated","user_metadata":{"role":"platform_admin"}}',true);
+select throws_ok($$select public.assign_initial_agency_superadmin('d4400000-0000-4000-8000-000000000001','d3300000-0000-4000-8000-000000000002')$$,'42501',null,'Forged platform metadata denied');
+select set_config('request.jwt.claims','{"sub":"d3300000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+select throws_ok($$select public.assign_initial_agency_superadmin('d4400000-0000-4000-8000-000000000002','d3300000-0000-4000-8000-000000000002')$$,'P0002',null,'Inactive agency denied');
+select throws_ok($$select public.assign_initial_agency_superadmin('d4400000-0000-4000-8000-000000000001','d3300000-0000-4000-8000-000000000099')$$,'P0002',null,'Missing profile denied');
+select lives_ok($$select public.assign_initial_agency_superadmin('d4400000-0000-4000-8000-000000000001','d3300000-0000-4000-8000-000000000002')$$,'Platform assigns first owner');
+select is((select role from public.memberships where agency_id='d4400000-0000-4000-8000-000000000001'),'agency_superadmin','Role is server owned');
+select ok((select is_active from public.memberships where agency_id='d4400000-0000-4000-8000-000000000001'),'Membership is active');
+select is((select count(*) from public.audit_events where agency_id='d4400000-0000-4000-8000-000000000001'),1::bigint,'One audit event');
+select is((select target_user_id from public.audit_events where agency_id='d4400000-0000-4000-8000-000000000001'),'d3300000-0000-4000-8000-000000000002'::uuid,'Audit records target');
+select is((select actor_id from public.audit_events where agency_id='d4400000-0000-4000-8000-000000000001'),auth.uid(),'Audit derives actor');
+select throws_ok($$select public.assign_initial_agency_superadmin('d4400000-0000-4000-8000-000000000001','d3300000-0000-4000-8000-000000000003')$$,'P0001',null,'Cannot replace first owner');
+select is((select count(*) from public.audit_events where agency_id='d4400000-0000-4000-8000-000000000001'),1::bigint,'Failed retry adds no event');
+select set_config('request.jwt.claims','{"sub":"d3300000-0000-4000-8000-000000000002","role":"authenticated"}',true);
+select is((select private.current_agency_role('d4400000-0000-4000-8000-000000000001')),'agency_superadmin','New owner gains actual agency access');
+select throws_ok($$select public.assign_initial_agency_superadmin('d4400000-0000-4000-8000-000000000002','d3300000-0000-4000-8000-000000000003')$$,'42501',null,'Agency superadmin cannot assign owners');
+reset role;
+update public.agencies set is_active=true where id='d4400000-0000-4000-8000-000000000002';
+insert into public.memberships(agency_id,user_id,role) values ('d4400000-0000-4000-8000-000000000002','d3300000-0000-4000-8000-000000000003','seller');
+set local role authenticated;
+select set_config('request.jwt.claims','{"sub":"d3300000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+select throws_ok($$select public.assign_initial_agency_superadmin('d4400000-0000-4000-8000-000000000002','d3300000-0000-4000-8000-000000000003')$$,'23505',null,'Existing seller cannot be silently promoted');
+select is((select role from public.memberships where agency_id='d4400000-0000-4000-8000-000000000002'),'seller','Existing role preserved');
+reset role;
+insert into public.agencies(id,name,slug,ars_per_usd) values ('d4400000-0000-4000-8000-000000000003','QA rollback','qa-assignment-rollback',1000);
+create function pg_temp.reject_assignment_audit() returns trigger language plpgsql as $$
+begin
+  if new.action='membership.superadmin_assigned' and new.agency_id='d4400000-0000-4000-8000-000000000003' then
+    raise exception 'Synthetic audit failure' using errcode='22000';
+  end if;
+  return new;
+end;
+$$;
+create trigger reject_assignment_audit before insert on public.audit_events for each row execute function pg_temp.reject_assignment_audit();
+set local role authenticated;
+select throws_ok($$select public.assign_initial_agency_superadmin('d4400000-0000-4000-8000-000000000003','d3300000-0000-4000-8000-000000000003')$$,'22000',null,'Audit failure rejects assignment');
+select is((select count(*) from public.memberships where agency_id='d4400000-0000-4000-8000-000000000003'),0::bigint,'No partial membership after failure');
+select is((select count(*) from public.audit_events where agency_id='d4400000-0000-4000-8000-000000000003'),0::bigint,'No partial audit after failure');
+reset role;
+update public.memberships set is_active=false where agency_id='d4400000-0000-4000-8000-000000000001';
+set local role authenticated;
+select throws_ok($$select public.assign_initial_agency_superadmin('d4400000-0000-4000-8000-000000000001','d3300000-0000-4000-8000-000000000003')$$,'P0001',null,'Inactive owner history cannot be replaced by initial assignment');
+reset role;
+update public.platform_admins set is_active=false where user_id='d3300000-0000-4000-8000-000000000001';
+set local role authenticated;
+select throws_ok($$select public.assign_initial_agency_superadmin('d4400000-0000-4000-8000-000000000002','d3300000-0000-4000-8000-000000000002')$$,'42501',null,'Revocation enforced');
+select throws_ok($$insert into public.memberships(agency_id,user_id,role) values ('d4400000-0000-4000-8000-000000000002','d3300000-0000-4000-8000-000000000002','agency_superadmin')$$,'42501',null,'Direct membership writes remain forbidden');
+select * from finish();
+rollback;

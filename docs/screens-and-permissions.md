@@ -2,7 +2,7 @@
 
 ## Screen map
 
-Implemented authentication/access: `/login` accepts existing email/password accounts; `/cuenta` validates the session, displays the account email and allows logout. `/recuperar` and `/recuperar/confirmar` implement password recovery. `/panel` resolves enabled agency access, offers a selector when needed and displays only the actual user, agency and role. `/plataforma` independently verifies its active assignment and links to agency administration. `/plataforma/agencias` lists agencies with pagination; `/plataforma/agencias/nueva` creates an active agency and records its author atomically. Owner assignment and user administration remain planned. The account page grants no agency access. The table describes the target product.
+Implemented authentication/access: `/login` accepts existing email/password accounts; `/cuenta` validates the session, displays the account email and allows logout. `/recuperar` and `/recuperar/confirmar` implement password recovery. `/panel` resolves enabled agency access, offers a selector when needed and displays only the actual user, agency and role. `/plataforma` independently verifies its active assignment and links to agency administration. `/plataforma/agencias` lists agencies with pagination; `/plataforma/agencias/nueva` creates an active agency and records its author atomically. The agency superadministrator route assigns an initial owner from existing profiles with an audited membership. The platform invitation route creates new invited Auth identities through an authenticated Edge Function; the recipient sets a password and accepts before receiving the agency role. Member listing and audited activation/deactivation are available in the agency management area; role changes remain planned. The account page grants no agency access. The table describes the target product.
 
 | Route                           | Audience                 | Planned content                                                     |
 | ------------------------------- | ------------------------ | ------------------------------------------------------------------- |
@@ -19,7 +19,7 @@ Implemented authentication/access: `/login` accepts existing email/password acco
 | /panel/usuarios                 | Agency management        | Permitted role creation, assignment and activation                  |
 | /plataforma                     | Platform superadmin      | Agency creation, owner assignment, global metrics                   |
 
-Planned routes are not implemented placeholders and must not be represented as working.
+Planned routes are not implemented placeholders and must not be represented as working. `/panel/usuarios?agency=<uuid>` now implements agency admin/seller invitations, paginated status and cancellation; `/invitaciones/usuarios/aceptar` handles new and existing accounts. Platform access by itself does not authorize agency user management; an explicit active agency management membership is required. `/panel/usuarios/miembros?agency=<uuid>` lists members and implements audited deactivation/reactivation with owner/self protection. Owners manage admins/sellers; admins only sellers. Changing roles remains pending.
 
 ## Permission matrix
 

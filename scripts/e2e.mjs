@@ -10,6 +10,7 @@ const cli = join(
   "dist/supabase.js",
 );
 const worker = process.argv.includes("--worker");
+let preparation = "Supabase local y sus migraciones";
 try {
   const status = z
     .object({
@@ -27,6 +28,39 @@ try {
         }),
       ),
     );
+  preparation = `la Edge Function local: npm run functions:serve -- ${worker ? "--worker" : "--e2e"}`;
+  for (const functionName of [
+    "invite-agency-superadmin",
+    "invite-agency-user",
+  ]) {
+    let functionReady = false;
+    for (let attempt = 0; attempt < 120; attempt++) {
+      try {
+        const response = await fetch(
+          `${status.API_URL}/functions/v1/${functionName}`,
+          { method: "POST", body: "{}", signal: AbortSignal.timeout(3000) },
+        );
+        const body = await response.json();
+        if (
+          response.status === 401 &&
+          z
+            .object({
+              ok: z.literal(false),
+              error: z.literal("Ingresá nuevamente."),
+            })
+            .safeParse(body).success
+        ) {
+          functionReady = true;
+          break;
+        }
+      } catch {
+        /* The local runtime can still be downloading its pinned dependencies. */
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+    if (!functionReady)
+      throw new Error("Local invitation function unavailable");
+  }
   const result = spawnSync(
     process.execPath,
     [
@@ -49,7 +83,7 @@ try {
   process.exitCode = result.status ?? 1;
 } catch {
   console.error(
-    "No se pudieron preparar las pruebas: verificá Supabase local y sus migraciones. No se imprimen credenciales.",
+    `No se pudieron preparar las pruebas: verificá ${preparation}. No se imprimen credenciales.`,
   );
   process.exitCode = 1;
 }
