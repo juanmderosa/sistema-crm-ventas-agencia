@@ -1,4 +1,16 @@
 import { z } from "zod";
+export const memberRoleSchema = z
+  .object({
+    agencyId: z.uuid(),
+    membershipId: z.uuid(),
+    role: z.enum(["admin", "seller"]),
+    expectedRole: z.enum(["admin", "seller"]),
+    expectedIsActive: z.boolean(),
+  })
+  .refine((value) => value.role !== value.expectedRole, {
+    path: ["role"],
+    message: "Elegí un rol distinto al actual.",
+  });
 export const memberStatusSchema = z
   .object({
     agencyId: z.uuid(),

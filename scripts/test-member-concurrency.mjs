@@ -114,31 +114,57 @@ try {
     ),
     "1",
   );
-  // Deterministic barriers reproduce actor-SHARE -> agency vs revocation-target locking.
-  const revoker = session(),
-    inviter = session();
-  try {
-    revoker.send(
-      `begin; select id from public.memberships where user_id='${owner}' and agency_id='${agency}' for share; select id from public.agencies where id='${agency}' for update; select 'revoker_ready';`,
-    );
-    await revoker.marker("revoker_ready");
-    inviter.send(
-      `begin; select id from public.memberships where user_id='${admin}' and agency_id='${agency}' for share; select 'inviter_ready'; set local role authenticated; set local request.jwt.claims='{"sub":"${admin}","role":"authenticated"}'; select public.begin_agency_user_invitation('${agency}','qa-recipient-${agency}@example.test','QA','seller'); commit;`,
-    );
-    await inviter.marker("inviter_ready");
-    revoker.end(
-      `set local role authenticated; set local request.jwt.claims='{"sub":"${owner}","role":"authenticated"}'; select public.set_agency_member_active('${agency}','${adminMembership}',false,true); commit;`,
-    );
-    const rejected = await revoker.done;
-    assert.notEqual(rejected.code, 0);
-    assert.ok(rejected.errors.includes("40001"));
-    assert.ok(!rejected.errors.includes("40P01"));
-    inviter.end();
-    assert.equal((await inviter.done).code, 0);
-  } finally {
-    revoker.end();
-    inviter.end();
-    await Promise.allSettled([revoker.done, inviter.done]);
+  const roleCommand = `select public.set_agency_member_role('${agency}','${sellerMembership}','admin','seller',false)`;
+  const roleRace = await Promise.all([
+    sql(authenticated(owner, roleCommand)),
+    sql(authenticated(owner, roleCommand)),
+  ]);
+  assert.equal(roleRace.filter((result) => result.code === 0).length, 1);
+  assert.ok(
+    roleRace.find((result) => result.code !== 0)?.errors.includes("40001"),
+  );
+  assert.equal(
+    await checked(
+      `select count(*) from public.audit_events where membership_id='${sellerMembership}' and action='membership.role_changed' and previous_role='seller' and new_role='admin'`,
+    ),
+    "1",
+  );
+  assert.equal(
+    await checked(
+      `select is_active from public.memberships where id='${sellerMembership}'`,
+    ),
+    "f",
+  );
+  // Both status and role changes must avoid cycles with an in-flight invitation.
+  for (const [index, operation] of [
+    `select public.set_agency_member_active('${agency}','${adminMembership}',false,true)`,
+    `select public.set_agency_member_role('${agency}','${adminMembership}','seller','admin',true)`,
+  ].entries()) {
+    const revoker = session(),
+      inviter = session();
+    try {
+      revoker.send(
+        `begin; select id from public.memberships where user_id='${owner}' and agency_id='${agency}' for share; select id from public.agencies where id='${agency}' for update; select 'revoker_ready';`,
+      );
+      await revoker.marker("revoker_ready");
+      inviter.send(
+        `begin; select id from public.memberships where user_id='${admin}' and agency_id='${agency}' for share; select 'inviter_ready'; set local role authenticated; set local request.jwt.claims='{"sub":"${admin}","role":"authenticated"}'; select public.begin_agency_user_invitation('${agency}','qa-recipient-${index}-${agency}@example.test','QA','seller'); commit;`,
+      );
+      await inviter.marker("inviter_ready");
+      revoker.end(
+        `set local role authenticated; set local request.jwt.claims='{"sub":"${owner}","role":"authenticated"}'; ${operation}; commit;`,
+      );
+      const rejected = await revoker.done;
+      assert.notEqual(rejected.code, 0);
+      assert.ok(rejected.errors.includes("40001"));
+      assert.ok(!rejected.errors.includes("40P01"));
+      inviter.end();
+      assert.equal((await inviter.done).code, 0);
+    } finally {
+      revoker.end();
+      inviter.end();
+      await Promise.allSettled([revoker.done, inviter.done]);
+    }
   }
   await checked(
     authenticated(
@@ -152,8 +178,20 @@ try {
     ),
     "f",
   );
+  await checked(
+    authenticated(
+      owner,
+      `select public.set_agency_member_role('${agency}','${adminMembership}','seller','admin',false)`,
+    ),
+  );
+  assert.equal(
+    await checked(
+      `select role from public.memberships where id='${adminMembership}'`,
+    ),
+    "seller",
+  );
   console.log(
-    "Concurrencia aprobada: un cambio/evento por estado esperado; conflicto de invitación sin deadlock y revocación reintentada correctamente.",
+    "Concurrencia aprobada: un evento por cambio de estado/rol esperado; conflictos de invitación sin deadlock y reintentos exitosos.",
   );
 } finally {
   await checked(
