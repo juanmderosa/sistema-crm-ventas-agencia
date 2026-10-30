@@ -79,6 +79,9 @@ export default async function PanelPage({
           )}
           {["agency_superadmin", "admin"].includes(access.membership.role) && (
             <nav className="agency-actions">
+              <a href={`/panel/agencia?agency=${access.membership.agency.id}`}>
+                Configurar agencia
+              </a>
               <a href={`/panel/usuarios?agency=${access.membership.agency.id}`}>
                 Administrar invitaciones de usuarios
               </a>

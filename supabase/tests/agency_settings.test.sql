@@ -1,0 +1,71 @@
+begin;
+create extension if not exists pgtap with schema extensions;
+select plan(32);
+insert into auth.users(id,email,email_confirmed_at) select ('e4100000-0000-4000-8000-'||lpad(n::text,12,'0'))::uuid,'settings-'||n||'@example.test',now() from generate_series(1,4) n;
+insert into public.profiles(id,display_name) select id,'QA ajustes' from auth.users where id::text like 'e4100000-%';
+insert into public.agencies(id,name,slug,ars_per_usd) values
+ ('e4200000-0000-4000-8000-000000000001','QA ajustes','qa-settings-a',1000),
+ ('e4200000-0000-4000-8000-000000000002','QA ajustes B','qa-settings-b',2000);
+insert into public.memberships(agency_id,user_id,role) values
+ ('e4200000-0000-4000-8000-000000000001','e4100000-0000-4000-8000-000000000001','agency_superadmin'),
+ ('e4200000-0000-4000-8000-000000000001','e4100000-0000-4000-8000-000000000002','admin'),
+ ('e4200000-0000-4000-8000-000000000001','e4100000-0000-4000-8000-000000000003','seller'),
+ ('e4200000-0000-4000-8000-000000000002','e4100000-0000-4000-8000-000000000003','admin');
+insert into public.platform_admins(user_id) values ('e4100000-0000-4000-8000-000000000004');
+select set_config('test.settings_version',(select settings_version::text from public.agencies where id='e4200000-0000-4000-8000-000000000001'),true);
+set local role anon;
+select throws_ok($$select public.update_agency_settings('e4200000-0000-4000-8000-000000000001',current_setting('test.settings_version')::uuid,'Nuevo','1100')$$,'42501',null,'Anonymous denied');
+set local role authenticated;
+select set_config('request.jwt.claims','{"sub":"e4100000-0000-4000-8000-000000000004","role":"authenticated"}',true);
+select throws_ok($$select public.update_agency_settings('e4200000-0000-4000-8000-000000000001',current_setting('test.settings_version')::uuid,'Nuevo','1100')$$,'42501',null,'Platform alone denied');
+select set_config('request.jwt.claims','{"sub":"e4100000-0000-4000-8000-000000000003","role":"authenticated"}',true);
+select throws_ok($$select public.update_agency_settings('e4200000-0000-4000-8000-000000000001',current_setting('test.settings_version')::uuid,'Nuevo','1100')$$,'42501',null,'Seller denied');
+select set_config('request.jwt.claims','{"sub":"e4100000-0000-4000-8000-000000000003","role":"authenticated","user_metadata":{"role":"agency_superadmin"}}',true);
+select throws_ok($$select public.update_agency_settings('e4200000-0000-4000-8000-000000000001',current_setting('test.settings_version')::uuid,'Nuevo','1100')$$,'42501',null,'Forged metadata denied');
+select set_config('request.jwt.claims','{"sub":"e4100000-0000-4000-8000-000000000002","role":"authenticated"}',true);
+select throws_ok($$select public.update_agency_settings('e4200000-0000-4000-8000-000000000002',current_setting('test.settings_version')::uuid,'Nuevo','1100')$$,'42501',null,'Foreign agency denied');
+select throws_ok($$select public.update_agency_settings('e4200000-0000-4000-8000-000000000001',current_setting('test.settings_version')::uuid,' ','1100')$$,'22023',null,'Blank name denied');
+select throws_ok($$select public.update_agency_settings('e4200000-0000-4000-8000-000000000001',current_setting('test.settings_version')::uuid,'Nuevo','0')$$,'22023',null,'Zero denied');
+select throws_ok($$select public.update_agency_settings('e4200000-0000-4000-8000-000000000001',current_setting('test.settings_version')::uuid,'Nuevo','NaN')$$,'22023',null,'NaN denied');
+select throws_ok($$select public.update_agency_settings('e4200000-0000-4000-8000-000000000001',current_setting('test.settings_version')::uuid,'Nuevo','1e3')$$,'22023',null,'Exponent denied');
+select throws_ok($$select public.update_agency_settings('e4200000-0000-4000-8000-000000000001',current_setting('test.settings_version')::uuid,'Nuevo','1.1234567')$$,'22023',null,'Excess precision denied without rounding');
+select throws_ok($$select public.update_agency_settings('e4200000-0000-4000-8000-000000000001',current_setting('test.settings_version')::uuid,'Nuevo','1000000000000')$$,'22023',null,'Overflow denied');
+select lives_ok($$select public.update_agency_settings('e4200000-0000-4000-8000-000000000001',current_setting('test.settings_version')::uuid,'Nuevo','999999999999.123456')$$,'Admin updates settings');
+select is((select ars_per_usd::text from public.agencies where id='e4200000-0000-4000-8000-000000000001'),'999999999999.123456','Exact decimal preserved');
+select is((select count(*) from public.agency_settings_history where agency_id='e4200000-0000-4000-8000-000000000001'),1::bigint,'Admin sees agency history');
+reset role;
+select is((select count(*) from public.audit_events a join public.agency_settings_history h on h.id=a.settings_change_id and h.agency_id=a.agency_id where a.agency_id='e4200000-0000-4000-8000-000000000001' and a.actor_id='e4100000-0000-4000-8000-000000000002' and h.actor_id=a.actor_id),1::bigint,'Audit and history bind actual author and agency');
+set local role authenticated;
+select set_config('request.jwt.claims','{"sub":"e4100000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+select throws_ok($$select public.update_agency_settings('e4200000-0000-4000-8000-000000000001',current_setting('test.settings_version')::uuid,'Otro','1200')$$,'40001',null,'Stale version denied');
+select throws_ok($$select public.update_agency_settings('e4200000-0000-4000-8000-000000000001',(select settings_version from public.agencies where id='e4200000-0000-4000-8000-000000000001'),'Nuevo','999999999999.123456')$$,'22023',null,'No-op denied');
+select lives_ok($$select public.update_agency_settings('e4200000-0000-4000-8000-000000000001',(select settings_version from public.agencies where id='e4200000-0000-4000-8000-000000000001'),'Solo nombre','999999999999.123456')$$,'Owner changes name only');
+select is((select ars_per_usd::text from public.agencies where id='e4200000-0000-4000-8000-000000000001'),'999999999999.123456','Name-only change preserves rate');
+select is((select count(*) from public.agency_settings_history where agency_id='e4200000-0000-4000-8000-000000000001' and previous_ars_per_usd<>new_ars_per_usd),1::bigint,'Name-only history does not pretend a rate change');
+select lives_ok($$select public.update_agency_settings('e4200000-0000-4000-8000-000000000001',(select settings_version from public.agencies where id='e4200000-0000-4000-8000-000000000001'),'QA ajustes','1000')$$,'Values can be deliberately restored');
+select throws_ok($$select public.update_agency_settings('e4200000-0000-4000-8000-000000000001',current_setting('test.settings_version')::uuid,'Otro','1200')$$,'40001',null,'Original version stays stale after values restored');
+select set_config('request.jwt.claims','{"sub":"e4100000-0000-4000-8000-000000000003","role":"authenticated"}',true);
+select is((select count(*) from public.agency_settings_history where agency_id='e4200000-0000-4000-8000-000000000001'),0::bigint,'Admin of B cannot read A history as seller of A');
+reset role;
+update public.memberships set is_active=false where agency_id='e4200000-0000-4000-8000-000000000001' and user_id='e4100000-0000-4000-8000-000000000001';
+set local role authenticated;
+select set_config('request.jwt.claims','{"sub":"e4100000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+select throws_ok($$select public.update_agency_settings('e4200000-0000-4000-8000-000000000001',current_setting('test.settings_version')::uuid,'Otro','1200')$$,'42501',null,'Revoked owner denied');
+reset role;
+update public.memberships set is_active=true where agency_id='e4200000-0000-4000-8000-000000000001' and user_id='e4100000-0000-4000-8000-000000000001';
+update public.agencies set is_active=false where id='e4200000-0000-4000-8000-000000000001';
+set local role authenticated;
+select throws_ok($$select public.update_agency_settings('e4200000-0000-4000-8000-000000000001',current_setting('test.settings_version')::uuid,'Otro','1200')$$,'P0002',null,'Inactive agency denied');
+reset role;
+update public.agencies set is_active=true where id='e4200000-0000-4000-8000-000000000001';
+create function pg_temp.reject_settings_audit() returns trigger language plpgsql as $$ begin if new.action='agency.settings_updated' then raise exception 'Synthetic audit failure' using errcode='22000'; end if; return new; end; $$;
+create trigger reject_settings_audit before insert on public.audit_events for each row execute function pg_temp.reject_settings_audit();
+set local role authenticated;
+select throws_ok($$select public.update_agency_settings('e4200000-0000-4000-8000-000000000001',(select settings_version from public.agencies where id='e4200000-0000-4000-8000-000000000001'),'No guardar','1200')$$,'22000',null,'Audit failure rolls back entire change');
+select is((select name from public.agencies where id='e4200000-0000-4000-8000-000000000001'),'QA ajustes','Name rollback verified');
+select is((select count(*) from public.agency_settings_history where agency_id='e4200000-0000-4000-8000-000000000001'),3::bigint,'History rollback verified');
+select throws_ok($$update public.agencies set ars_per_usd=1200$$,'42501',null,'Direct agency writes denied');
+select throws_ok($$insert into public.agency_settings_history(agency_id,actor_id,previous_name,new_name,previous_ars_per_usd,new_ars_per_usd) values('e4200000-0000-4000-8000-000000000001',auth.uid(),'A','B',1,2)$$,'42501',null,'Direct history insertion denied');
+select throws_ok($$update public.agency_settings_history set new_name='Fake'$$,'42501',null,'History update denied');
+select throws_ok($$delete from public.agency_settings_history$$,'42501',null,'History deletion denied');
+select * from finish(); rollback;
